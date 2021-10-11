@@ -106,12 +106,6 @@ namespace Oxide.Plugins
         private Dictionary<string, object> API_GetClosestUnderwaterLabModules(Vector3 position) =>
             GetClosestMonumentForAPI(_labModules.Values, position);
 
-        private List<Dictionary<string, object>> API_Find(string filter) =>
-            FilterMonumentsForAPI(_allMonuments.Values, filter);
-
-        private List<Dictionary<string, object>> API_FindByAlias(string alias) =>
-            FilterMonumentsForAPI(_allMonuments.Values, alias, useAlias: true);
-
         private List<Dictionary<string, object>> API_FindMonuments(string filter) =>
             FilterMonumentsForAPI(_normalMonuments.Values, filter);
 
@@ -120,6 +114,15 @@ namespace Oxide.Plugins
 
         private List<Dictionary<string, object>> API_FindUnderwaterLabModules(string filter) =>
             FilterMonumentsForAPI(_labModules.Values, filter);
+
+        private List<Dictionary<string, object>> API_Find(string filter) =>
+            FilterMonumentsForAPI(_allMonuments.Values, filter);
+
+        private List<Dictionary<string, object>> API_FindByShortName(string shortName) =>
+            FilterMonumentsForAPI(_allMonuments.Values, shortName: shortName);
+
+        private List<Dictionary<string, object>> API_FindByAlias(string alias) =>
+            FilterMonumentsForAPI(_allMonuments.Values, alias: alias);
 
         // Kept for backwards compatibility with previous versions.
         private List<MonumentInfo> FindMonuments(string filter)
@@ -314,26 +317,26 @@ namespace Oxide.Plugins
             return baseMonument.APIResult;
         }
 
-        private List<T> FilterMonuments<T>(IEnumerable<T> monumentList, string filter, bool useAlias = false) where T : BaseMonumentAdapter
+        private List<T> FilterMonuments<T>(IEnumerable<T> monumentList, string filter = null, string shortName = null, string alias = null) where T : BaseMonumentAdapter
         {
             var results = new List<T>();
 
             foreach (var baseMonument in monumentList)
             {
-                if (string.IsNullOrEmpty(filter) || baseMonument.MatchesFilter(filter, useAlias))
+                if (baseMonument.MatchesFilter(filter, shortName, alias))
                     results.Add(baseMonument);
             }
 
             return results;
         }
 
-        private List<Dictionary<string, object>> FilterMonumentsForAPI(IEnumerable<BaseMonumentAdapter> monumentList, string filter, bool useAlias = false)
+        private List<Dictionary<string, object>> FilterMonumentsForAPI(IEnumerable<BaseMonumentAdapter> monumentList, string filter = null, string shortName = null, string alias = null)
         {
             var results = new List<Dictionary<string, object>>();
 
             foreach (var baseMonument in monumentList)
             {
-                if (string.IsNullOrEmpty(filter) || baseMonument.MatchesFilter(filter, useAlias))
+                if (baseMonument.MatchesFilter(filter, shortName, alias))
                     results.Add(baseMonument.APIResult);
             }
 
@@ -412,10 +415,16 @@ namespace Oxide.Plugins
             public abstract bool IsInBounds(Vector3 position);
             public abstract Vector3 ClosestPointOnBounds(Vector3 position);
 
-            public virtual bool MatchesFilter(string filter, bool useAlias = false)
+            public virtual bool MatchesFilter(string filter, string shortName, string alias)
             {
-                if (useAlias)
-                    return Alias?.Equals(filter, StringComparison.InvariantCultureIgnoreCase) ?? false;
+                if (alias != null)
+                    return Alias?.Equals(alias, StringComparison.InvariantCultureIgnoreCase) ?? false;
+
+                if (shortName != null)
+                    return ShortName.Equals(shortName, StringComparison.InvariantCultureIgnoreCase);
+
+                if (string.IsNullOrEmpty(filter))
+                    return true;
 
                 return PrefabName.Contains(filter, CompareOptions.IgnoreCase);
             }
@@ -547,13 +556,10 @@ namespace Oxide.Plugins
             public override Vector3 ClosestPointOnBounds(Vector3 position) =>
                 BoundingBox.ClosestPoint(position);
 
-            public override bool MatchesFilter(string filter, bool useAlias)
+            public override bool MatchesFilter(string filter, string shortName, string alias)
             {
-                if (useAlias)
-                    return base.MatchesFilter(filter, useAlias);
-
-                return base.MatchesFilter(filter)
-                    || MonumentInfo.Type.ToString().Contains(filter, CompareOptions.IgnoreCase);
+                return base.MatchesFilter(filter, shortName, alias)
+                    || !string.IsNullOrEmpty(filter) && MonumentInfo.Type.ToString().Contains(filter, CompareOptions.IgnoreCase);
             }
         }
 

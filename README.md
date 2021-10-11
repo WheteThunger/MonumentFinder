@@ -114,6 +114,10 @@ List<Dictionary<string, object>> API_Find(string filter)
 ```
 
 ```cs
+List<Dictionary<string, object>> API_FindByShortName(string shortName)
+```
+
+```cs
 List<Dictionary<string, object>> API_FindByAlias(string alias)
 ```
 
