@@ -131,7 +131,7 @@ Each `Dictionary<string, object>` object consists of the following keys.
   - Type: `string`
 - `"ShortName"` -- The short prefab name of the monument.
   - Type: `string`
-- `"Alias"` -- The alias of the monument if it has one, or else the short prefab name. For example, all train stations will use the alias `TrainStation`.
+- `"Alias"` -- The alias of the monument if it has one, or else null. For example, all train stations will use the alias `TrainStation`.
   - Type: `string`
   - Possible aliases: `TrainStation` | `BarricadeTunnel` | `LootTunnel` | `SplitTunnel` | `Intersection` | `LargeIntersection` | `CornerTunnel`.
 - `"Position"` -- The position of the monument.

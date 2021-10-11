@@ -24,7 +24,7 @@ namespace Oxide.Plugins
 
         private const float DrawDuration = 30;
 
-        private Dictionary<MonumentInfo, MonumentAdapter> _normalMonuments = new Dictionary<MonumentInfo, MonumentAdapter>();
+        private Dictionary<MonumentInfo, NormalMonumentAdapter> _normalMonuments = new Dictionary<MonumentInfo, NormalMonumentAdapter>();
         private Dictionary<DungeonGridCell, TrainTunnelAdapter> _trainTunnels = new Dictionary<DungeonGridCell, TrainTunnelAdapter>();
         private Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter> _labModules = new Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter>();
         private Dictionary<MonoBehaviour, BaseMonumentAdapter> _allMonuments = new Dictionary<MonoBehaviour, BaseMonumentAdapter>();
@@ -84,7 +84,7 @@ namespace Oxide.Plugins
 
             foreach (var monument in TerrainMeta.Path.Monuments)
             {
-                var normalMonument = new MonumentAdapter(monument);
+                var normalMonument = new NormalMonumentAdapter(monument);
                 _normalMonuments[monument] = normalMonument;
                 _allMonuments[monument] = normalMonument;
             }
@@ -395,7 +395,6 @@ namespace Oxide.Plugins
                 Object = behavior;
                 PrefabName = behavior.name;
                 ShortName = GetShortName(behavior.name);
-                Alias = ShortName;
                 Position = behavior.transform.position;
                 Rotation = behavior.transform.rotation;
             }
@@ -413,10 +412,10 @@ namespace Oxide.Plugins
             public abstract bool IsInBounds(Vector3 position);
             public abstract Vector3 ClosestPointOnBounds(Vector3 position);
 
-            public virtual bool MatchesFilter(string filter, bool useAlias)
+            public virtual bool MatchesFilter(string filter, bool useAlias = false)
             {
                 if (useAlias)
-                    return Alias.Equals(filter, StringComparison.InvariantCultureIgnoreCase);
+                    return Alias?.Equals(filter, StringComparison.InvariantCultureIgnoreCase) ?? false;
 
                 return PrefabName.Contains(filter, CompareOptions.IgnoreCase);
             }
@@ -448,7 +447,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private class MonumentAdapter : BaseMonumentAdapter, SingleBoundingBox
+        private class NormalMonumentAdapter : BaseMonumentAdapter, SingleBoundingBox
         {
             private static Bounds DefaultMonumentMarkerBounds = new Bounds(new Vector3(0, 15, 0), new Vector3(30, 30, 30));
 
@@ -526,7 +525,7 @@ namespace Oxide.Plugins
             public MonumentInfo MonumentInfo { get; private set; }
             public OBB BoundingBox { get; private set; }
 
-            public MonumentAdapter(MonumentInfo monumentInfo) : base(monumentInfo)
+            public NormalMonumentAdapter(MonumentInfo monumentInfo) : base(monumentInfo)
             {
                 MonumentInfo = monumentInfo;
 
@@ -553,7 +552,7 @@ namespace Oxide.Plugins
                 if (useAlias)
                     return base.MatchesFilter(filter, useAlias);
 
-                return base.MatchesFilter(filter, useAlias)
+                return base.MatchesFilter(filter)
                     || MonumentInfo.Type.ToString().Contains(filter, CompareOptions.IgnoreCase);
             }
         }
