@@ -102,7 +102,7 @@ List<Dictionary<string, object>> API_FindUnderwaterLabModules(string filter)
 ```
 
 ```cs
-Dictionary<string, object> API_GetClosestUnderwaterLabRoom(Vector3 position)
+Dictionary<string, object> API_GetClosestUnderwaterLabModule(Vector3 position)
 ```
 
 ### Find any type of monument
