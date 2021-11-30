@@ -171,7 +171,7 @@ class MonumentAdapter
 
     private Dictionary<string, object> _monumentInfo;
 
-    public MonumentAdapter(Dictionary<string, object> monumentInfo) : base((MonoBehaviour)monumentInfo["Object"])
+    public MonumentAdapter(Dictionary<string, object> monumentInfo)
     {
         _monumentInfo = monumentInfo;
     }
