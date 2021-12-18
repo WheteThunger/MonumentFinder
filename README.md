@@ -7,7 +7,7 @@
 
 ## Permissions
 
-- `monumentfinder.find` -- Allows players to find monuments.
+- `monumentfinder.find` -- Allows players to find monuments. Intended for administrators.
 
 ## Commands
 
@@ -50,21 +50,36 @@ Default configuration:
     - `Center` -- Determines the center of the bounding box. If the center of the monument and the origin of the monument are equal, then you can probably just use all zeros for this value. If you want to offset the bounding box relative to the monument's origin, then update this value to offset the bounding box. The most common reason to offset a bounding box is to raise it above ground, which can be achieved by simply increasing the `y` component of this value.
     - `Size` -- Determines the size of the bounding box relative to the monument's center. For example, if the monument is shaped like a cube, set `x`, `y` and `z` to the same value.
 
-## Localization
+## How to set up custom monuments
+
+You must have `ownerid` or `moderatorid` to proceed.
+
+1. Run the `mf list <filter>` command to verify that your monument can be found. If you don't see it in the list, then the monument is not using the `monument_marker` prefab, so it needs to be updated in a map editor before proceeding.
+2. Once you determine the name of the monument, run the command `mf show <name>`. If the name has spaces, wrap the name in quotes. This command will show the monument name floating above the monument in-game.
+3. Go to the monument and run the command `mf closest`. This should display the monument name floating above it, with a bounding box around the monument. If this box contains the monument accurately, then you are done.
+4. If the bounding box is not accurate, add an entry into the config like the example in the configuration section, using the monument name from earlier, reload the plugin, and run the `mf closest` command again to visualize the changes.
+5. Keep editing the values, reloading the plugin, and running that command until you are satisifed with the bounds.
+
+### Default custom monument bounds
 
 ```json
-{
-  "NoPermission": "You don't have permission to do that.",
-  "NoMonumentsFound": "No monuments found",
-  "AtMonument": "At monument: {0}\nRelative position: {1}",
-  "ClosestMonument": "Closest monument: {0}\nDistance: {1:f2}m",
-  "List.Header": "Listing monuments:",
-  "Help.Header": "Monument Finder commands:",
-  "Help.List": "<color=#9f6>{0} list <filter></color> - List monuments matching filter",
-  "Help.Show": "<color=#9f6>{0} show <filter></color> - Show monuments matching filter",
-  "Help.Closest": "<color=#9f6>{0} closest</color> - Show info about the closest monument"
+"Center": {
+  "x": 0.0,
+  "y": 15.0,
+  "z": 0.0
+},
+"Size": {
+  "x": 30.0,
+  "y": 30.0,
+  "z": 30.0
 }
 ```
+
+### Example of accurate bounds
+
+Eventually it should look something like below. The +X, -X, +Z, and -Z guidelines indicate the directions of X and Z axes so that you make changes to the correct values.
+
+![](https://raw.githubusercontent.com/WheteThunger/MonumentFinder/master/Bounds.png)
 
 ## Example monument names
 
@@ -128,6 +143,22 @@ These were found by using Prefab Sniffer with the command `prefab find assets/bu
 - water_well_c
 - water_well_d
 - water_well_e
+
+## Localization
+
+```json
+{
+  "NoPermission": "You don't have permission to do that.",
+  "NoMonumentsFound": "No monuments found",
+  "AtMonument": "At monument: {0}\nRelative position: {1}",
+  "ClosestMonument": "Closest monument: {0}\nDistance: {1:f2}m",
+  "List.Header": "Listing monuments:",
+  "Help.Header": "Monument Finder commands:",
+  "Help.List": "<color=#9f6>{0} list <filter></color> - List monuments matching filter",
+  "Help.Show": "<color=#9f6>{0} show <filter></color> - Show monuments matching filter",
+  "Help.Closest": "<color=#9f6>{0} closest</color> - Show info about the closest monument"
+}
+```
 
 ## Developer API
 
