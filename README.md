@@ -66,6 +66,69 @@ Default configuration:
 }
 ```
 
+## Example monument names
+
+These were found by using Prefab Sniffer with the command `prefab find assets/bundled/prefabs/autospawn/monument`.
+
+- airfield_1
+- bandit_town
+- cave_large_hard
+- cave_large_medium
+- cave_large_sewers_hard
+- cave_medium_easy
+- cave_medium_hard
+- cave_medium_medium
+- cave_small_easy
+- cave_small_hard
+- cave_small_medium
+- compound
+- desert_military_base_a
+- desert_military_base_b
+- desert_military_base_c
+- desert_military_base_d
+- excavator_1
+- fishing_village_a
+- fishing_village_b
+- fishing_village_c
+- gas_station_1
+- harbor_1
+- harbor_2
+- ice_lake_1
+- ice_lake_2
+- ice_lake_3
+- ice_lake_4
+- junkyard_1
+- launch_site_1
+- lighthouse
+- military_tunnel_1
+- mining_quarry_a
+- mining_quarry_b
+- mining_quarry_c
+- oilrig_1
+- oilrig_2
+- powerplant_1
+- radtown_small_3
+- satellite_dish
+- sphere_tank
+- stables_a
+- stables_b
+- supermarket_1
+- swamp_a
+- swamp_b
+- swamp_c
+- trainyard_1
+- underwater_lab_a
+- underwater_lab_b
+- underwater_lab_c
+- underwater_lab_d
+- warehouse
+- water_treatment_plant_1
+- water_well_a
+- water_well_b
+- water_well_c
+- water_well_d
+- water_well_e
+
 ## Developer API
 
 Note: If you want to 100% accurately determine if a given position is at a monument (especially if it's in a cave), you should use monument topology checks, rather than completely relying on this plugin's API. After the topology check, if you want to determine specifically which monument the position is within or closest to, then this API will help you since the bounds provided by this plugin are more accurate than vanilla.
