@@ -475,7 +475,7 @@ namespace Oxide.Plugins
                 ["entrance_bunker_b"] = new Bounds(new Vector3(-8, 1, 0), new Vector3(30, 30, 18)),
                 ["entrance_bunker_c"] = new Bounds(new Vector3(-3.5f, 1, -5f), new Vector3(24, 30, 27)),
                 ["entrance_bunker_d"] = new Bounds(new Vector3(-3.5f, 1, -0.5f), new Vector3(20, 30, 17)),
-                ["excavator_1"] = new Bounds(new Vector3(-70, 40, 65), new Vector3(240, 100, 230)),
+                ["excavator_1"] = new Bounds(new Vector3(0, 40, 0), new Vector3(240, 100, 230)),
                 ["fishing_village_a"] = new Bounds(new Vector3(-3, 5, -11), new Vector3(76, 24, 80)),
                 ["fishing_village_b"] = new Bounds(new Vector3(-3, 4, -4), new Vector3(42, 24, 76)),
                 ["fishing_village_c"] = new Bounds(new Vector3(-0.5f, 4, -4.5f), new Vector3(31, 22, 75)),
