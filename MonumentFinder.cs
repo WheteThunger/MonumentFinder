@@ -519,11 +519,19 @@ namespace Oxide.Plugins
                 ["water_well_e"] = new Bounds(new Vector3(0, 10, 0), new Vector3(24, 20, 24)),
             };
 
+            private static bool IsCustomMonument(MonumentInfo monumentInfo)
+            {
+                return monumentInfo.name.Contains("monument_marker.prefab");
+            }
+
             private static Bounds GetBounds(MonumentInfo monumentInfo, string shortName)
             {
                 var boundsInfo = _pluginConfig.GetOverrideBounds(shortName);
                 if (boundsInfo != null)
                     return boundsInfo.ToBounds();
+
+                if (IsCustomMonument(monumentInfo))
+                    return DefaultMonumentMarkerBounds;
 
                 Bounds bounds;
                 return MonumentBounds.TryGetValue(shortName, out bounds)
@@ -538,7 +546,7 @@ namespace Oxide.Plugins
             {
                 MonumentInfo = monumentInfo;
 
-                if (monumentInfo.name.Contains("monument_marker.prefab"))
+                if (IsCustomMonument(monumentInfo))
                 {
                     PrefabName = monumentInfo.transform.root.name;
                     ShortName = PrefabName;
