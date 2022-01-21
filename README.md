@@ -162,7 +162,17 @@ These were found by using Prefab Sniffer with the command `prefab find assets/bu
 
 ## Developer API
 
-Note: If you want to 100% accurately determine if a given position is at a monument (especially if it's in a cave), you should use monument topology checks, rather than completely relying on this plugin's API. After the topology check, if you want to determine specifically which monument the position is within or closest to, then this API will help you since the bounds provided by this plugin are more accurate than vanilla.
+### When to use this API
+
+If you want to find a predetermined aboveground vanilla monument such as Outpost, you can simply loop `TerrainMeta.Path.Monuments` to find it. Doing so will allow you to avoid the dependency on Monument Finder.
+
+The main reasons to use this API are as follows:
+- To accurately determine which monument a position is within. Without this plugin, you would have to resort to distance checks, which could return inaccurate results when small monuments are next to large monuments.
+- To determine if a given position is within a train tunnel.
+- To determine if a given position is within an underwater lab module.
+
+Not supported:
+- Caves. You can do topology checks for this use case.
 
 ### Find vanilla or custom monuments
 
