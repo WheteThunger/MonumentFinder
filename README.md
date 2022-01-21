@@ -239,11 +239,11 @@ Each `Dictionary<string, object>` object consists of the following keys.
 - `"TransformPoint"` -- Delegate that works like [UnityEngine.Transform.TransformPoint](https://docs.unity3d.com/ScriptReference/Transform.TransformPoint.html).
   - Type: `Func<Vector3, Vector3>`
 - `"InverseTransformPoint"` -- Delegate that works like [UnityEngine.Transform.InverseTransformPoint](https://docs.unity3d.com/ScriptReference/Transform.InverseTransformPoint.html).
-  - Type: `new Func<Vector3, Vector3>`
+  - Type: `Func<Vector3, Vector3>`
 - `"ClosestPointOnBounds"` -- Delegate that returns the closest position that is within the monument's bounds, like [UnityEngine.Collider.ClosestPointOnBounds](https://docs.unity3d.com/ScriptReference/Collider.ClosestPointOnBounds.html).
-  - Type: `new Func<Vector3, Vector3>`
+  - Type: `Func<Vector3, Vector3>`
 - `"IsInBounds"` -- Delegate that returns true if the position is within the monument's bounds, like Rust's `MonumentInfo.IsInBounds(Vector3)`.
-  - Type: `new Func<Vector3, bool>`
+  - Type: `Func<Vector3, bool>`
 
 ### Example use in plugins
 
@@ -257,6 +257,7 @@ Plugin MonumentFinder;
 
 class MonumentAdapter
 {
+    public MonoBehaviour Object => (MonoBehaviour)_monumentInfo["Object"];
     public string PrefabName => (string)_monumentInfo["PrefabName"];
     public string ShortName => (string)_monumentInfo["ShortName"];
     public string Alias => (string)_monumentInfo["Alias"];
