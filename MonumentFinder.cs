@@ -501,7 +501,7 @@ namespace Oxide.Plugins
                 ["sphere_tank"] = new Bounds(new Vector3(0, 41, 0), new Vector3(100, 84, 100)),
                 ["stables_a"] = new Bounds(new Vector3(0, 10, 4), new Vector3(50, 20, 60)),
                 ["stables_b"] = new Bounds(new Vector3(2, 15, 6), new Vector3(78, 30, 66)),
-                ["supermarket_1"] = new Bounds(new Vector3(1, 5, 1), new Vector3(40, 10, 44)),
+                ["supermarket_1"] = new Bounds(new Vector3(1, 4.5f, 1), new Vector3(40, 10, 44)),
                 ["swamp_a"] = new Bounds(new Vector3(-10, 11, 0), new Vector3(140, 30, 140)),
                 ["swamp_b"] = new Bounds(new Vector3(0, 14, 0), new Vector3(100, 36, 100)),
                 ["swamp_c"] = new Bounds(new Vector3(0, 7, 0), new Vector3(100, 30, 100)),
