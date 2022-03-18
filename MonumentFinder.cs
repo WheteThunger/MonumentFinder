@@ -458,8 +458,6 @@ namespace Oxide.Plugins
 
         private class NormalMonumentAdapter : BaseMonumentAdapter, SingleBoundingBox
         {
-            private static Bounds DefaultMonumentMarkerBounds = new Bounds(new Vector3(0, 15, 0), new Vector3(30, 30, 30));
-
             private static Dictionary<string, Bounds> MonumentBounds = new Dictionary<string, Bounds>
             {
                 // These bounds are more accurate than what is provided in vanilla.
@@ -531,7 +529,7 @@ namespace Oxide.Plugins
                     return boundsInfo.ToBounds();
 
                 if (IsCustomMonument(monumentInfo))
-                    return DefaultMonumentMarkerBounds;
+                    return _pluginConfig.DefaultCustomMonumentBounds.ToBounds();
 
                 Bounds bounds;
                 return MonumentBounds.TryGetValue(shortName, out bounds)
@@ -919,8 +917,15 @@ namespace Oxide.Plugins
             [JsonProperty(PropertyName = "Command")]
             public string Command = "mf";
 
+            [JsonProperty("Default custom monument bounds")]
+            public BoundsInfo DefaultCustomMonumentBounds = new BoundsInfo
+            {
+                Center = new Vector3(0, 10, 0),
+                Size = new Vector3(30, 30, 30),
+            };
+
             [JsonProperty("Override monument bounds", ObjectCreationHandling = ObjectCreationHandling.Replace)]
-            public Dictionary<string, BoundsInfo> OverrideMonumentBounds = new Dictionary<string, BoundsInfo>
+            private Dictionary<string, BoundsInfo> OverrideMonumentBounds = new Dictionary<string, BoundsInfo>
             {
                 ["example_monument"] = new BoundsInfo
                 {
@@ -930,7 +935,7 @@ namespace Oxide.Plugins
             };
 
             [JsonProperty("OverrideMonumentBounds")]
-            public Dictionary<string, BoundsInfo> DeprecatedOverrideMonumentBounds
+            private Dictionary<string, BoundsInfo> DeprecatedOverrideMonumentBounds
             { set { OverrideMonumentBounds = value; } }
 
             public BoundsInfo GetOverrideBounds(string alias)

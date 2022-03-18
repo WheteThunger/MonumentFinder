@@ -25,6 +25,18 @@ Default configuration:
 ```json
 {
   "Command": "mf",
+  "Default custom monument bounds": {
+    "Center": {
+      "x": 0.0,
+      "y": 10.0,
+      "z": 0.0
+    },
+    "Size": {
+      "x": 30.0,
+      "y": 30.0,
+      "z": 30.0
+    }
+  },
   "Override monument bounds": {
     "example_monument": {
       "Center": {
@@ -43,6 +55,7 @@ Default configuration:
 ```
 
 - `Command` -- Determines the base command of the plugin.
+- `Default custom monument bounds` -- This determines the default bounds that will apply to custom monuments. These may not be best for every monument, so you can override them per monument in `Override monument bounds` if desired.
 - `Override monument bounds` -- This section allows you to override the bounds for any vanilla or custom monument. Does not work for train tunnels or underwater labs.
   - These bounds have no effect on vanilla. Instead, they allow plugins to accurately determine whether a given position is at a monument.
   - Most vanilla monuments already have bounds hard-coded into the plugin which should be fairly accurate, so you probably don't need to override bounds except for custom monuments.
@@ -59,21 +72,6 @@ You must have `ownerid` or `moderatorid` to proceed.
 3. Go to the monument and run the command `mf closest`. This should display the monument name floating above it, with a bounding box around the monument. If this box contains the monument accurately, then you are done.
 4. If the bounding box is not accurate, add an entry into the config like the example in the configuration section, using the monument name from earlier, reload the plugin, and run the `mf closest` command again to visualize the changes.
 5. Keep editing the values, reloading the plugin, and running that command until you are satisifed with the bounds.
-
-### Default custom monument bounds
-
-```json
-"Center": {
-  "x": 0.0,
-  "y": 15.0,
-  "z": 0.0
-},
-"Size": {
-  "x": 30.0,
-  "y": 30.0,
-  "z": 30.0
-}
-```
 
 ### Example of accurate bounds
 
