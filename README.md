@@ -43,7 +43,7 @@ Default configuration:
 ```
 
 - `Command` -- Determines the base command of the plugin.
-- `OverrideMonumentBounds` -- This section allows you to override the bounds for any vanilla or custom monument. Does not work for train tunnels or underwater labs.
+- `Override monument bounds` -- This section allows you to override the bounds for any vanilla or custom monument. Does not work for train tunnels or underwater labs.
   - These bounds have no effect on vanilla. Instead, they allow plugins to accurately determine whether a given position is at a monument.
   - Most vanilla monuments already have bounds hard-coded into the plugin which should be fairly accurate, so you probably don't need to override bounds except for custom monuments.
   - Monuments should be listed using their short prefab name, with the following options.

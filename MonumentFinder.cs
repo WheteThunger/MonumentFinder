@@ -919,7 +919,7 @@ namespace Oxide.Plugins
             [JsonProperty(PropertyName = "Command")]
             public string Command = "mf";
 
-            [JsonProperty("Override monument bounds")]
+            [JsonProperty("Override monument bounds", ObjectCreationHandling = ObjectCreationHandling.Replace)]
             public Dictionary<string, BoundsInfo> OverrideMonumentBounds = new Dictionary<string, BoundsInfo>
             {
                 ["example_monument"] = new BoundsInfo
