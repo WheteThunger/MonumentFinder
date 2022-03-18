@@ -919,7 +919,7 @@ namespace Oxide.Plugins
             [JsonProperty(PropertyName = "Command")]
             public string Command = "mf";
 
-            [JsonProperty("OverrideMonumentBounds")]
+            [JsonProperty("Override monument bounds")]
             public Dictionary<string, BoundsInfo> OverrideMonumentBounds = new Dictionary<string, BoundsInfo>
             {
                 ["example_monument"] = new BoundsInfo
@@ -928,6 +928,10 @@ namespace Oxide.Plugins
                     Size = new Vector3(30, 20, 30),
                 },
             };
+
+            [JsonProperty("OverrideMonumentBounds")]
+            public Dictionary<string, BoundsInfo> DeprecatedOverrideMonumentBounds
+            { set { OverrideMonumentBounds = value; } }
 
             public BoundsInfo GetOverrideBounds(string alias)
             {

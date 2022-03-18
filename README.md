@@ -25,7 +25,7 @@ Default configuration:
 ```json
 {
   "Command": "mf",
-  "OverrideMonumentBounds": {
+  "Override monument bounds": {
     "example_monument": {
       "Center": {
         "x": 0.0,
