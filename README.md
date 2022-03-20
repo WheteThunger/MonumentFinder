@@ -17,6 +17,7 @@ Note: The command `mf` can be changed in the plugin configuration.
 - `mf list <filter>` -- List all monuments, train tunnels, and underwater lab modules. The filter is optional.
 - `mf show <filter>` -- (Requires admin) Shows text above all monuments, train tunnels, and underwater lab modules. The filter is optional.
 - `mf closest` -- Prints information about the closest monument, train tunnel, or underwater lab module. If admin, this also displays the monument bounds.
+- `mf closest config` -- Adds an entry into the config for the closest monument.
 
 ## Configuration
 
@@ -25,29 +26,59 @@ Default configuration:
 ```json
 {
   "Command": "mf",
-  "Default custom monument bounds": {
-    "Center": {
-      "x": 0.0,
-      "y": 10.0,
-      "z": 0.0
+  "Default custom monument settings": {
+    "Position": {
+      "Auto determine from monument marker": true,
+      "Auto determine from prevent building volume": false
     },
-    "Size": {
-      "x": 30.0,
-      "y": 30.0,
-      "z": 30.0
+    "Rotation": {
+      "Auto determine from monument marker": true,
+      "Auto determine from prevent building volume": false
+    },
+    "Bounds": {
+      "Auto determine from monument marker": false,
+      "Auto determine from prevent building volume": false,
+      "Use custom bounds": true,
+      "Custom bounds": {
+        "Size": {
+          "x": 30.0,
+          "y": 30.0,
+          "z": 30.0
+        },
+        "Center adjustment": {
+          "x": 0.0,
+          "y": 10.0,
+          "z": 0.0
+        }
+      }
     }
   },
-  "Override monument bounds": {
+  "Monuments": {
     "example_monument": {
-      "Center": {
-        "x": 0.0,
-        "y": 10.0,
-        "z": 0.0
+      "Position": {
+        "Auto determine from monument marker": true,
+        "Auto determine from prevent building volume": false
       },
-      "Size": {
-        "x": 30.0,
-        "y": 20.0,
-        "z": 30.0
+      "Rotation": {
+        "Auto determine from monument marker": true,
+        "Auto determine from prevent building volume": false
+      },
+      "Bounds": {
+        "Auto determine from monument marker": false,
+        "Auto determine from prevent building volume": false,
+        "Use custom bounds": true,
+        "Custom bounds": {
+          "Size": {
+            "x": 30.0,
+            "y": 30.0,
+            "z": 30.0
+          },
+          "Center adjustment": {
+            "x": 0.0,
+            "y": 10.0,
+            "z": 0.0
+          }
+        }
       }
     }
   }
@@ -55,13 +86,23 @@ Default configuration:
 ```
 
 - `Command` -- Determines the base command of the plugin.
-- `Default custom monument bounds` -- This determines the default bounds that will apply to custom monuments. These may not be best for every monument, so you can override them per monument in `Override monument bounds` if desired.
-- `Override monument bounds` -- This section allows you to override the bounds for any vanilla or custom monument. Does not work for train tunnels or underwater labs.
-  - These bounds have no effect on vanilla. Instead, they allow plugins to accurately determine whether a given position is at a monument.
-  - Most vanilla monuments already have bounds hard-coded into the plugin which should be fairly accurate, so you probably don't need to override bounds except for custom monuments.
-  - Monuments should be listed using their short prefab name, with the following options.
-    - `Center` -- Determines the center of the bounding box. If the center of the monument and the origin of the monument are equal, then you can probably just use all zeros for this value. If you want to offset the bounding box relative to the monument's origin, then update this value to offset the bounding box. The most common reason to offset a bounding box is to raise it above ground, which can be achieved by simply increasing the `y` component of this value.
-    - `Size` -- Determines the size of the bounding box relative to the monument's center. For example, if the monument is shaped like a cube, set `x`, `y` and `z` to the same value.
+- `Default custom monument settings` -- Defines how the plugin will determine the position, rotation and bounds of custom monuments. The behavior for individual custom monuments can be overriden in the `Monuments` section on the config.
+  - `Position` -- Defines how the plugin will determine the monument's "origin". Plugins such as Monument Addons or Custom Vending Setup will capture coordinates relative to the origin. **Caution: Changing how the origin is determined for a monument may cause issues with plugins that have already generated coordinates relative to that monument, meaning you may have to redo setup for those plugins at that monument.**
+    - `Auto determine from monument marker` (`true` or `false`) -- While `true`, plugins will see the monument's origin as the monument marker's position.
+      - Note: Since RustEdit does not currently allow custom prefabs to include a monument marker, map developers might not position/rotate monument markers consistently for every instance of a monument, so relying on the marker position/rotation may cause issues with plugins that use monument-relative coordinates.
+    - `Auto determine from prevent building volume` (`true` or `false`) -- While `true`, plugins will see the monument's origin as the center of the Prevent Building Sphere/Cube, if there is one overlapping the monument marker.
+  - `Rotation` -- Defines how the plugin will determine the monument's rotation. **Caution: Changing how the rotation is determined for a monument may cause issues with plugins that have already generated coordinates relative to that monument, meaning you may have to redo setup for those plugins at that monument.**
+    - `Auto determine from monument marker` (`true` or `false`) -- While `true`, plugins will see the monument's rotation as the monument marker's rotation.
+      - Note: Since RustEdit does not currently allow custom prefabs to include a monument marker, map developers might not position/rotate monument markers consistently for every instance of a monument, so relying on the marker position/rotation may cause issues with plugins that use monument-relative coordinates.
+    - `Auto determine from prevent building volume` (`true` or `false`) -- While `true`, plugins will see the monument's rotation as the rotation of the Prevent Building Sphere/Cube, if there is one overlapping the monument marker.
+  - `Bounds` -- Defines how the plugin will determine the monument's bounding box. Bounds are used by other plugins to accurately determine whether a given position is in a monument, and to determine specifically which monument.
+    - `Auto determine from monument marker` (`true` or `false`) -- While `true`, plugins will see the monument's bounding box as monument marker's bounding box. This is an appropriate choice only if the map developer scaled the monument marker to cover the monument, which you should encourage map developers to do since it makes it very easy for this plugin to determine monument bounds.
+    - `Auto determine from prevent building volume` (`true` or `false`) -- While `true`, plugins will see the monument's bounding box as the center of the Prevent Building Sphere/Cube, if there is one overlapping the monument marker.
+    - `Use custom bounds` (`true` or `false`) -- While `true`, plugins will see the monument's bounding box as you configure in `Custom bounds`.
+    - `Custom bounds`
+      - `Size` -- Determines the size of the bounding box relative tot he monument's origin. For example, if the monument is shaped like a cube, set `x`, `y` and `z` to the same value.
+      - `Center adjustment` -- Adjusts the center of the bounding box, **relative** to the monument's origin. For example, if you want the center of the bounding box to be 10 meters above the monument's origin, set this to `"x": 0, "y": 10, "z": 0`.
+- `Monuments` -- This section allows you to override the configuration for individual monuments, including vanilla monuments and custom monuments. Customizing train tunnels and underwater labs is not supported. The options are the same as for `Default custom monument settings`, but options such as `Auto determine from monument marker` and `Auto determine from prevent building volume` have no effect on vanilla monuments.
 
 ## How to set up custom monuments
 
@@ -70,12 +111,12 @@ You must have `ownerid` or `moderatorid` to proceed.
 1. Run the `mf list <filter>` command to verify that your monument can be found. If you don't see it in the list, then the monument is not using the `monument_marker` prefab, so it needs to be updated in a map editor before proceeding.
 2. Once you determine the name of the monument, run the command `mf show <name>`. If the name has spaces, wrap the name in quotes. This command will show the monument name floating above the monument in-game.
 3. Go to the monument and run the command `mf closest`. This should display the monument name floating above it, with a bounding box around the monument. If this box contains the monument accurately, then you are done.
-4. If the bounding box is not accurate, add an entry into the config like the example in the configuration section, using the monument name from earlier, reload the plugin, and run the `mf closest` command again to visualize the changes.
-5. Keep editing the values, reloading the plugin, and running that command until you are satisifed with the bounds.
+4. If the bounding box is not accurate, run the command `mf closest config` to automatically add an entry into the plugin config.
+5. Configure the bounds in the plugin configuration, reload the plugin, and run `mf closest` to visualize the bounds. Repeat this process until you are satisifed with the bounds. Note: If the map developer made the monument marker cover the monument, or if they added a Prevent Building Sphere/Cube to the monument, then you can try the config options to auto detect the bounds from those. If neither of those are present, or if the bounds aren't suitable, then you can configure custom bounds.
 
 ### Example of accurate bounds
 
-Eventually it should look something like below. The +X, -X, +Z, and -Z guidelines indicate the directions of X and Z axes so that you make changes to the correct values.
+Eventually it should look something like below. The +X, -X, +Z, and -Z guidelines indicate the directions of X and Z axes so that you make changes to the correct values if configuring custom bounds.
 
 ![](https://raw.githubusercontent.com/WheteThunger/MonumentFinder/master/Bounds.png)
 
@@ -150,11 +191,14 @@ These were found by using Prefab Sniffer with the command `prefab find assets/bu
   "NoMonumentsFound": "No monuments found",
   "AtMonument": "At monument: {0}\nRelative position: {1}",
   "ClosestMonument": "Closest monument: {0}\nDistance: {1:f2}m",
+  "Closest.Config.Success": "Added monument <color=#9f6>{0}</color> to the plugin config.",
+  "Closest.Config.AlreadyPresent": "Monument <color=#9f6>{0}</color> is already in the plugin config.",
   "List.Header": "Listing monuments:",
   "Help.Header": "Monument Finder commands:",
   "Help.List": "<color=#9f6>{0} list <filter></color> - List monuments matching filter",
   "Help.Show": "<color=#9f6>{0} show <filter></color> - Show monuments matching filter",
-  "Help.Closest": "<color=#9f6>{0} closest</color> - Show info about the closest monument"
+  "Help.Closest": "<color=#9f6>{0} closest</color> - Show info about the closest monument",
+  "Help.Closest.Config": "<color=#9f6>{0} closest config</color> - Adds the closest monument to the config"
 }
 ```
 

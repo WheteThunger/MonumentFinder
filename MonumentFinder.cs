@@ -12,12 +12,13 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Monument Finder", "WhiteThunder", "3.0.0")]
+    [Info("Monument Finder", "WhiteThunder", "3.1.0")]
     [Description("Find monuments with commands or API.")]
     internal class MonumentFinder : CovalencePlugin
     {
         #region Fields
 
+        private static MonumentFinder _pluginInstance;
         private static Configuration _pluginConfig;
 
         private const string PermissionFind = "monumentfinder.find";
@@ -29,12 +30,15 @@ namespace Oxide.Plugins
         private Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter> _labModules = new Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter>();
         private Dictionary<MonoBehaviour, BaseMonumentAdapter> _allMonuments = new Dictionary<MonoBehaviour, BaseMonumentAdapter>();
 
+        private Collider[] _colliderBuffer = new Collider[1];
+
         #endregion
 
         #region Hooks
 
         private void Init()
         {
+            _pluginInstance = this;
             permission.RegisterPermission(PermissionFind, this);
 
             AddCovalenceCommand(_pluginConfig.Command, nameof(CommandFind));
@@ -43,6 +47,7 @@ namespace Oxide.Plugins
         private void Unload()
         {
             _pluginConfig = null;
+            _pluginInstance = null;
         }
 
         private void OnServerInitialized()
@@ -202,6 +207,7 @@ namespace Oxide.Plugins
             builder.AppendLine(GetMessage(player, Lang.HelpList, command));
             builder.AppendLine(GetMessage(player, Lang.HelpShow, command));
             builder.AppendLine(GetMessage(player, Lang.HelpClosest, command));
+            builder.AppendLine(GetMessage(player, Lang.HelpClosestConfig, command));
             player.Reply(builder.ToString());
         }
 
@@ -251,16 +257,33 @@ namespace Oxide.Plugins
                 return;
             }
 
-            if (monument.IsInBounds(position))
+            var firstArg = args.FirstOrDefault() ?? string.Empty;
+            if (firstArg.Equals("config", StringComparison.CurrentCultureIgnoreCase))
             {
-                var relativePosition = monument.InverseTransformPoint(position);
-                ReplyToPlayer(player, Lang.AtMonument, monument.PrefabName, relativePosition);
+                var aliasOrShortName = monument.Alias ?? monument.ShortName;
+                if (_pluginConfig.AddMonument(aliasOrShortName, monument))
+                {
+                    Config.WriteObject(_pluginConfig, true);
+                    ReplyToPlayer(player, Lang.ClosestConfigSuccess, aliasOrShortName);
+                }
+                else
+                {
+                    ReplyToPlayer(player, Lang.ClosestConfigAlreadyPresent, aliasOrShortName);
+                }
             }
             else
             {
-                var closestPoint = monument.ClosestPointOnBounds(position);
-                var distance = (position - closestPoint).magnitude;
-                ReplyToPlayer(player, Lang.ClosestMonument, monument.PrefabName, distance);
+                if (monument.IsInBounds(position))
+                {
+                    var relativePosition = monument.InverseTransformPoint(position);
+                    ReplyToPlayer(player, Lang.AtMonument, monument.PrefabName, relativePosition);
+                }
+                else
+                {
+                    var closestPoint = monument.ClosestPointOnBounds(position);
+                    var distance = (position - closestPoint).magnitude;
+                    ReplyToPlayer(player, Lang.ClosestMonument, monument.PrefabName, distance);
+                }
             }
 
             if (basePlayer.IsAdmin)
@@ -289,6 +312,30 @@ namespace Oxide.Plugins
         #endregion
 
         #region Helper Methods
+
+        private static void LogError(string message) => Interface.Oxide.LogError($"[Monument Finder] {message}");
+
+        private static void LogWarning(string message) => Interface.Oxide.LogWarning($"[Monument Finder] {message}");
+
+        private static bool IsCustomMonument(MonumentInfo monumentInfo)
+        {
+            return monumentInfo.name.Contains("monument_marker.prefab");
+        }
+
+        private static Collider FindPreventBuildingVolume(Vector3 position)
+        {
+            var buffer = _pluginInstance._colliderBuffer;
+
+            if (Physics.OverlapSphereNonAlloc(position, 1, buffer, Rust.Layers.Mask.Prevent_Building, QueryTriggerInteraction.Ignore) == 0)
+                return null;
+
+            var collider = buffer[0];
+            buffer[0] = null;
+
+            return (collider is BoxCollider || collider is SphereCollider)
+                ? collider
+                : null;
+        }
 
         private T GetClosestMonument<T>(IEnumerable<T> monumentList, Vector3 position) where T : BaseMonumentAdapter
         {
@@ -458,7 +505,7 @@ namespace Oxide.Plugins
 
         private class NormalMonumentAdapter : BaseMonumentAdapter, SingleBoundingBox
         {
-            private static Dictionary<string, Bounds> MonumentBounds = new Dictionary<string, Bounds>
+            public static Dictionary<string, Bounds> MonumentBounds = new Dictionary<string, Bounds>
             {
                 // These bounds are more accurate than what is provided in vanilla.
                 ["airfield_1"] = new Bounds(new Vector3(0, 15, -25), new Vector3(355, 70, 210)),
@@ -517,43 +564,93 @@ namespace Oxide.Plugins
                 ["water_well_e"] = new Bounds(new Vector3(0, 10, 0), new Vector3(24, 20, 24)),
             };
 
-            private static bool IsCustomMonument(MonumentInfo monumentInfo)
-            {
-                return monumentInfo.name.Contains("monument_marker.prefab");
-            }
-
-            private static Bounds GetBounds(MonumentInfo monumentInfo, string shortName)
-            {
-                var boundsInfo = _pluginConfig.GetOverrideBounds(shortName);
-                if (boundsInfo != null)
-                    return boundsInfo.ToBounds();
-
-                if (IsCustomMonument(monumentInfo))
-                    return _pluginConfig.DefaultCustomMonumentBounds.ToBounds();
-
-                Bounds bounds;
-                return MonumentBounds.TryGetValue(shortName, out bounds)
-                    ? bounds
-                    : monumentInfo.Bounds;
-            }
-
             public MonumentInfo MonumentInfo { get; private set; }
             public OBB BoundingBox { get; private set; }
 
             public NormalMonumentAdapter(MonumentInfo monumentInfo) : base(monumentInfo)
             {
                 MonumentInfo = monumentInfo;
+                var bounds = monumentInfo.Bounds;
 
                 if (IsCustomMonument(monumentInfo))
                 {
                     PrefabName = monumentInfo.transform.root.name;
                     ShortName = PrefabName;
-                    BoundingBox = new OBB(Position, Rotation, GetBounds(monumentInfo, ShortName));
+
+                    var monumentSettings = _pluginConfig.GetMonumentSettings(ShortName)
+                        ?? _pluginConfig.DefaultCustomMonumentSettings;
+
+                    var volumeCollider = monumentSettings.Position.UsePreventBuildingVolume
+                        || monumentSettings.Rotation.UsePreventBuildingVolume
+                        || monumentSettings.Bounds.UsePreventBuildingVolume
+                            ? FindPreventBuildingVolume(Position)
+                            : null;
+
+                    if (!monumentSettings.Position.UseMonumentMarker
+                        && monumentSettings.Position.UsePreventBuildingVolume)
+                    {
+                        if (volumeCollider != null)
+                        {
+                            Position = volumeCollider.transform.position;
+                        }
+                        else
+                        {
+                            LogWarning($"Unable to find a PreventBuilding volume for monument {ShortName}. Determining position from monument marker instead.");
+                        }
+                    }
+
+                    if (!monumentSettings.Rotation.UseMonumentMarker
+                        && monumentSettings.Rotation.UsePreventBuildingVolume)
+                    {
+                        if (volumeCollider != null)
+                        {
+                            Rotation = volumeCollider.transform.rotation;
+                        }
+                        else
+                        {
+                            LogWarning($"Unable to find a PreventBuilding volume for monument {ShortName}. Determining rotation from monument marker instead.");
+                        }
+                    }
+
+                    if (monumentSettings.Bounds.UseCustomBounds)
+                    {
+                        bounds = monumentSettings.Bounds.CustomBounds.ToBounds();
+                    }
+                    else if (monumentSettings.Bounds.UseMonumentMarker)
+                    {
+                        bounds = new Bounds(Position - monumentInfo.transform.position, monumentInfo.transform.localScale);
+                    }
+                    else if (monumentSettings.Bounds.UsePreventBuildingVolume)
+                    {
+                        if (volumeCollider != null)
+                        {
+                            bounds = volumeCollider.bounds;
+                            bounds.center = Quaternion.Inverse(Rotation) * (bounds.center - Position);
+                        }
+                        else
+                        {
+                            LogError($"Unable to find a PreventBuilding volume for monument {ShortName}. Unable to determine bounds.");
+                        }
+                    }
                 }
                 else
                 {
-                    BoundingBox = new OBB(Position, Rotation, GetBounds(monumentInfo, ShortName));
+                    var monumentSettings = _pluginConfig.GetMonumentSettings(ShortName);
+                    if (monumentSettings != null && monumentSettings.Bounds.UseCustomBounds)
+                    {
+                        bounds = monumentSettings.Bounds.CustomBounds.ToBounds();
+                    }
+                    else
+                    {
+                        Bounds hardCodedBounds;
+                        if (MonumentBounds.TryGetValue(ShortName, out hardCodedBounds))
+                        {
+                            bounds = hardCodedBounds;
+                        }
+                    }
                 }
+
+                BoundingBox = new OBB(Position, Rotation, bounds);
             }
 
             public override bool IsInBounds(Vector3 position) =>
@@ -702,7 +799,14 @@ namespace Oxide.Plugins
                 Rotation = _tunnelInfo.Rotation;
                 Alias = _tunnelInfo.Alias;
 
-                var bounds = _pluginConfig.GetOverrideBounds(_tunnelInfo.Alias)?.ToBounds() ?? _tunnelInfo.Bounds;
+                var bounds = _tunnelInfo.Bounds;
+
+                var monumentSettings = _pluginConfig.GetMonumentSettings(_tunnelInfo.Alias);
+                if (monumentSettings != null && monumentSettings.Bounds.UseCustomBounds)
+                {
+                    bounds = monumentSettings.Bounds.CustomBounds.ToBounds();
+                }
+
                 BoundingBox = new OBB(Position, Rotation, bounds);
             }
 
@@ -901,15 +1005,88 @@ namespace Oxide.Plugins
 
         #region Configuration
 
-        private class BoundsInfo
+        private class CustomBounds
         {
-            [JsonProperty("Center")]
-            public Vector3 Center;
-
             [JsonProperty("Size")]
             public Vector3 Size;
 
-            public Bounds ToBounds() => new Bounds(Center, Size);
+            [JsonProperty("Center adjustment")]
+            public Vector3 CenterOffset;
+
+            [JsonProperty("Center")]
+            private Vector3 DeprecatedCenter
+            { set { CenterOffset = value ; } }
+
+            public Bounds ToBounds() => new Bounds(CenterOffset, Size);
+
+            public CustomBounds Copy()
+            {
+                return new CustomBounds
+                {
+                    Size = Size,
+                    CenterOffset = CenterOffset,
+                };
+            }
+        }
+
+        private class BaseDetectionSettings
+        {
+            [JsonProperty("Auto determine from monument marker", Order = -3)]
+            public bool UseMonumentMarker = false;
+
+            [JsonProperty("Auto determine from prevent building volume", Order = -2)]
+            public bool UsePreventBuildingVolume = false;
+
+            public BaseDetectionSettings Copy()
+            {
+                return new BaseDetectionSettings
+                {
+                    UseMonumentMarker = UseMonumentMarker,
+                    UsePreventBuildingVolume = UsePreventBuildingVolume,
+                };
+            }
+        }
+
+        private class BoundSettings : BaseDetectionSettings
+        {
+            [JsonProperty("Use custom bounds")]
+            public bool UseCustomBounds = false;
+
+            [JsonProperty("Custom bounds")]
+            public CustomBounds CustomBounds = new CustomBounds();
+
+            public new BoundSettings Copy()
+            {
+                return new BoundSettings
+                {
+                    UseMonumentMarker = UseMonumentMarker,
+                    UsePreventBuildingVolume = UsePreventBuildingVolume,
+                    UseCustomBounds = UseCustomBounds,
+                    CustomBounds = CustomBounds.Copy(),
+                };
+            }
+        }
+
+        private class MonumentSettings
+        {
+            [JsonProperty("Position")]
+            public BaseDetectionSettings Position = new BaseDetectionSettings();
+
+            [JsonProperty("Rotation")]
+            public BaseDetectionSettings Rotation = new BaseDetectionSettings();
+
+            [JsonProperty("Bounds")]
+            public BoundSettings Bounds = new BoundSettings();
+
+            public MonumentSettings Copy()
+            {
+                return new MonumentSettings
+                {
+                    Position = Position.Copy(),
+                    Rotation = Rotation.Copy(),
+                    Bounds = Bounds.Copy(),
+                };
+            }
         }
 
         private class Configuration : SerializableConfiguration
@@ -917,33 +1094,128 @@ namespace Oxide.Plugins
             [JsonProperty(PropertyName = "Command")]
             public string Command = "mf";
 
-            [JsonProperty("Default custom monument bounds")]
-            public BoundsInfo DefaultCustomMonumentBounds = new BoundsInfo
+            [JsonProperty("Default custom monument settings")]
+            public MonumentSettings DefaultCustomMonumentSettings = new MonumentSettings
             {
-                Center = new Vector3(0, 10, 0),
-                Size = new Vector3(30, 30, 30),
+                Position = new BaseDetectionSettings
+                {
+                    UseMonumentMarker = true,
+                    UsePreventBuildingVolume = false,
+                },
+                Rotation = new BaseDetectionSettings
+                {
+                    UseMonumentMarker = true,
+                    UsePreventBuildingVolume = false,
+                },
+                Bounds = new BoundSettings
+                {
+                    UseMonumentMarker = false,
+                    UseCustomBounds = true,
+                    CustomBounds = new CustomBounds
+                    {
+                        CenterOffset = new Vector3(0, 10, 0),
+                        Size = new Vector3(30, 30, 30),
+                    },
+                },
             };
 
-            [JsonProperty("Override monument bounds", ObjectCreationHandling = ObjectCreationHandling.Replace)]
-            private Dictionary<string, BoundsInfo> OverrideMonumentBounds = new Dictionary<string, BoundsInfo>
+            [JsonProperty("Monuments", ObjectCreationHandling = ObjectCreationHandling.Replace)]
+            private Dictionary<string, MonumentSettings> MonumentSettingsMap = new Dictionary<string, MonumentSettings>
             {
-                ["example_monument"] = new BoundsInfo
+                ["example_monument"] = new MonumentSettings
                 {
-                    Center = new Vector3(0, 10, 0),
-                    Size = new Vector3(30, 20, 30),
+                    Position = new BaseDetectionSettings
+                    {
+                        UseMonumentMarker = true,
+                        UsePreventBuildingVolume = false,
+                    },
+                    Rotation = new BaseDetectionSettings
+                    {
+                        UseMonumentMarker = true,
+                        UsePreventBuildingVolume = false,
+                    },
+                    Bounds = new BoundSettings
+                    {
+                        UseMonumentMarker = false,
+                        UseCustomBounds = true,
+                        CustomBounds = new CustomBounds
+                        {
+                            CenterOffset = new Vector3(0, 10, 0),
+                            Size = new Vector3(30, 30, 30),
+                        },
+                    },
                 },
             };
 
             [JsonProperty("OverrideMonumentBounds")]
-            private Dictionary<string, BoundsInfo> DeprecatedOverrideMonumentBounds
-            { set { OverrideMonumentBounds = value; } }
-
-            public BoundsInfo GetOverrideBounds(string alias)
+            private Dictionary<string, CustomBounds> DeprecatedOverrideMonumentBounds
             {
-                BoundsInfo boundsInfo;
-                return OverrideMonumentBounds.TryGetValue(alias, out boundsInfo)
-                    ? boundsInfo
+                set
+                {
+                    foreach (var entry in value)
+                    {
+                        MonumentSettingsMap[entry.Key] = new MonumentSettings
+                        {
+                            Position = new BaseDetectionSettings { UseMonumentMarker = true },
+                            Rotation = new BaseDetectionSettings { UseMonumentMarker = true },
+                            Bounds = new BoundSettings
+                            {
+                                UseCustomBounds = true,
+                                CustomBounds = entry.Value,
+                            },
+                        };
+                    }
+                }
+            }
+
+            public MonumentSettings GetMonumentSettings(string monumentName)
+            {
+                MonumentSettings monumentSettings;
+                return MonumentSettingsMap.TryGetValue(monumentName, out monumentSettings)
+                    ? monumentSettings
                     : null;
+            }
+
+            public bool AddMonument(string aliasOrShortName, BaseMonumentAdapter monument)
+            {
+                if (MonumentSettingsMap.ContainsKey(aliasOrShortName))
+                    return false;
+
+                var monumentInfo = monument.Object as MonumentInfo;
+                var isCustomMonument = monumentInfo != null
+                    ? IsCustomMonument(monumentInfo)
+                    : false;
+
+                MonumentSettings monumentSettings;
+
+                if (isCustomMonument)
+                {
+                    monumentSettings = DefaultCustomMonumentSettings.Copy();
+                }
+                else
+                {
+                    Bounds bounds;
+                    if (!NormalMonumentAdapter.MonumentBounds.TryGetValue(aliasOrShortName, out bounds))
+                    {
+                        bounds = default(Bounds);
+                    }
+
+                    monumentSettings = new MonumentSettings
+                    {
+                        Bounds = new BoundSettings
+                        {
+                            UseCustomBounds = true,
+                            CustomBounds = new CustomBounds
+                            {
+                                Size = bounds.size,
+                                CenterOffset = bounds.center,
+                            },
+                        }
+                    };
+                }
+
+                MonumentSettingsMap[aliasOrShortName] = monumentSettings;
+                return true;
             }
         }
 
@@ -1084,10 +1356,13 @@ namespace Oxide.Plugins
             public const string ListHeader = "List.Header";
             public const string AtMonument = "AtMonument";
             public const string ClosestMonument = "ClosestMonument";
+            public const string ClosestConfigSuccess = "Closest.Config.Success";
+            public const string ClosestConfigAlreadyPresent = "Closest.Config.AlreadyPresent";
             public const string HelpHeader = "Help.Header";
             public const string HelpList = "Help.List";
             public const string HelpShow = "Help.Show";
             public const string HelpClosest = "Help.Closest";
+            public const string HelpClosestConfig = "Help.Closest.Config";
         }
 
         protected override void LoadDefaultMessages()
@@ -1098,11 +1373,14 @@ namespace Oxide.Plugins
                 [Lang.NoMonumentsFound] = "No monuments found",
                 [Lang.AtMonument] = "At monument: {0}\nRelative position: {1}",
                 [Lang.ClosestMonument] = "Closest monument: {0}\nDistance: {1:f2}m",
+                [Lang.ClosestConfigSuccess] = "Added monument <color=#9f6>{0}</color> to the plugin config.",
+                [Lang.ClosestConfigAlreadyPresent] = "Monument <color=#9f6>{0}</color> is already in the plugin config.",
                 [Lang.ListHeader] = "Listing monuments:",
                 [Lang.HelpHeader] = "Monument Finder commands:",
                 [Lang.HelpList] = "<color=#9f6>{0} list <filter></color> - List monuments matching filter",
                 [Lang.HelpShow] = "<color=#9f6>{0} show <filter></color> - Show monuments matching filter",
                 [Lang.HelpClosest] = "<color=#9f6>{0} closest</color> - Show info about the closest monument",
+                [Lang.HelpClosestConfig] = "<color=#9f6>{0} closest config</color> - Adds the closest monument to the config",
             }, this, "en");
         }
 
