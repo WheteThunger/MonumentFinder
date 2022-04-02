@@ -97,10 +97,10 @@ Default configuration:
     - `Auto determine from prevent building volume` (`true` or `false`) -- While `true`, plugins will see the monument's rotation as the rotation of the Prevent Building Sphere/Cube, if there is one overlapping the monument marker.
   - `Bounds` -- Defines how the plugin will determine the monument's bounding box. Bounds are used by other plugins to accurately determine whether a given position is in a monument, and to determine specifically which monument.
     - `Auto determine from monument marker` (`true` or `false`) -- While `true`, plugins will see the monument's bounding box as monument marker's bounding box. This is an appropriate choice only if the map developer scaled the monument marker to cover the monument, which you should encourage map developers to do since it makes it very easy for this plugin to determine monument bounds.
-    - `Auto determine from prevent building volume` (`true` or `false`) -- While `true`, plugins will see the monument's bounding box as the center of the Prevent Building Sphere/Cube, if there is one overlapping the monument marker.
+    - `Auto determine from prevent building volume` (`true` or `false`) -- While `true`, plugins will see the monument's bounding box as the bounds of the Prevent Building Sphere/Cube, if there is one overlapping the monument marker.
     - `Use custom bounds` (`true` or `false`) -- While `true`, plugins will see the monument's bounding box as you configure in `Custom bounds`.
     - `Custom bounds`
-      - `Size` -- Determines the size of the bounding box relative tot he monument's origin. For example, if the monument is shaped like a cube, set `x`, `y` and `z` to the same value.
+      - `Size` -- Determines the size of the bounding box relative to the monument's origin. For example, if the monument is shaped like a cube, set `x`, `y` and `z` to the same value.
       - `Center adjustment` -- Adjusts the center of the bounding box, **relative** to the monument's origin. For example, if you want the center of the bounding box to be 10 meters above the monument's origin, set this to `"x": 0, "y": 10, "z": 0`.
 - `Monuments` -- This section allows you to override the configuration for individual monuments, including vanilla monuments and custom monuments. Customizing train tunnels and underwater labs is not supported. The options are the same as for `Default custom monument settings`, but options such as `Auto determine from monument marker` and `Auto determine from prevent building volume` have no effect on vanilla monuments.
 
