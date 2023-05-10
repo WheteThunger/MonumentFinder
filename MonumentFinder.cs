@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
 using System;
@@ -30,7 +29,7 @@ namespace Oxide.Plugins
         private Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter> _labModules = new Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter>();
         private Dictionary<MonoBehaviour, BaseMonumentAdapter> _allMonuments = new Dictionary<MonoBehaviour, BaseMonumentAdapter>();
 
-        private Collider[] _colliderBuffer = new Collider[1];
+        private Collider[] _colliderBuffer = new Collider[8];
 
         #endregion
 
@@ -325,16 +324,21 @@ namespace Oxide.Plugins
         private static Collider FindPreventBuildingVolume(Vector3 position)
         {
             var buffer = _pluginInstance._colliderBuffer;
+            var count = Physics.OverlapSphereNonAlloc(position, 1, buffer, Rust.Layers.Mask.Prevent_Building, QueryTriggerInteraction.Ignore);
 
-            if (Physics.OverlapSphereNonAlloc(position, 1, buffer, Rust.Layers.Mask.Prevent_Building, QueryTriggerInteraction.Ignore) == 0)
+            if (count == 0)
                 return null;
 
-            var collider = buffer[0];
-            buffer[0] = null;
+            for (var i = 0; i < count; i++)
+            {
+                var collider = buffer[i];
+                if ((collider is BoxCollider || collider is SphereCollider)
+                    // Only count prevent_building prefabs, not all prefabs that have prevent building colliders.
+                    && collider.name.Contains("prevent_building", CompareOptions.IgnoreCase))
+                    return collider;
+            }
 
-            return (collider is BoxCollider || collider is SphereCollider)
-                ? collider
-                : null;
+            return null;
         }
 
         private T GetClosestMonument<T>(IEnumerable<T> monumentList, Vector3 position) where T : BaseMonumentAdapter
