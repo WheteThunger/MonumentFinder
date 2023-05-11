@@ -294,7 +294,9 @@ namespace Oxide.Plugins
                 {
                     var boundingBox = withBoundingBox.BoundingBox;
                     if (boundingBox.extents != Vector3.zero)
+                    {
                         Ddraw.Box(basePlayer, boundingBox, Color.magenta, DrawDuration);
+                    }
 
                     return;
                 }
@@ -303,7 +305,9 @@ namespace Oxide.Plugins
                 if (withMultipleBoundingBoxes != null)
                 {
                     foreach (var boundingBox in withMultipleBoundingBoxes.BoundingBoxes)
+                    {
                         Ddraw.Box(basePlayer, boundingBox, Color.magenta, DrawDuration, showInfo: false);
+                    }
                 }
             }
         }
@@ -341,7 +345,7 @@ namespace Oxide.Plugins
             return null;
         }
 
-        private T GetClosestMonument<T>(IEnumerable<T> monumentList, Vector3 position) where T : BaseMonumentAdapter
+        private static T GetClosestMonument<T>(IEnumerable<T> monumentList, Vector3 position) where T : BaseMonumentAdapter
         {
             T closestMonument = null;
             var closestSqrDistance = float.MaxValue;
@@ -359,16 +363,12 @@ namespace Oxide.Plugins
             return closestMonument;
         }
 
-        private Dictionary<string, object> GetClosestMonumentForAPI(IEnumerable<BaseMonumentAdapter> monumentList, Vector3 position)
+        private static Dictionary<string, object> GetClosestMonumentForAPI(IEnumerable<BaseMonumentAdapter> monumentList, Vector3 position)
         {
-            var baseMonument = GetClosestMonument(monumentList, position);
-            if (baseMonument == null)
-                return null;
-
-            return baseMonument.APIResult;
+            return GetClosestMonument(monumentList, position)?.APIResult;
         }
 
-        private List<T> FilterMonuments<T>(IEnumerable<T> monumentList, string filter = null, string shortName = null, string alias = null) where T : BaseMonumentAdapter
+        private static List<T> FilterMonuments<T>(IEnumerable<T> monumentList, string filter = null, string shortName = null, string alias = null) where T : BaseMonumentAdapter
         {
             var results = new List<T>();
 
@@ -381,14 +381,16 @@ namespace Oxide.Plugins
             return results;
         }
 
-        private List<Dictionary<string, object>> FilterMonumentsForAPI(IEnumerable<BaseMonumentAdapter> monumentList, string filter = null, string shortName = null, string alias = null)
+        private static List<Dictionary<string, object>> FilterMonumentsForAPI(IEnumerable<BaseMonumentAdapter> monumentList, string filter = null, string shortName = null, string alias = null)
         {
             var results = new List<Dictionary<string, object>>();
 
             foreach (var baseMonument in monumentList)
             {
                 if (baseMonument.MatchesFilter(filter, shortName, alias))
+                {
                     results.Add(baseMonument.APIResult);
+                }
             }
 
             return results;
@@ -400,12 +402,14 @@ namespace Oxide.Plugins
             builder.AppendLine(GetMessage(player, Lang.ListHeader));
 
             foreach (var monument in monuments)
+            {
                 builder.AppendLine(monument.PrefabName);
+            }
 
             player.Reply(builder.ToString());
         }
 
-        private void ShowMonumentName(BasePlayer player, BaseMonumentAdapter monument)
+        private static void ShowMonumentName(BasePlayer player, BaseMonumentAdapter monument)
         {
             Ddraw.Text(player, monument.Position, $"<size=20>{monument.ShortName}</size>", Color.magenta, 30);
         }
@@ -433,7 +437,7 @@ namespace Oxide.Plugins
                 return baseName.Replace(".prefab", "");
             }
 
-            public MonoBehaviour Object { get; protected set; }
+            public MonoBehaviour Object { get; }
             public string PrefabName { get; protected set; }
             public string ShortName { get; protected set; }
 
@@ -568,8 +572,8 @@ namespace Oxide.Plugins
                 ["water_well_e"] = new Bounds(new Vector3(0, 10, 0), new Vector3(24, 20, 24)),
             };
 
-            public MonumentInfo MonumentInfo { get; private set; }
-            public OBB BoundingBox { get; private set; }
+            public MonumentInfo MonumentInfo { get; }
+            public OBB BoundingBox { get; }
 
             public NormalMonumentAdapter(MonumentInfo monumentInfo) : base(monumentInfo)
             {
@@ -672,7 +676,7 @@ namespace Oxide.Plugins
 
         private class TrainTunnelAdapter : BaseMonumentAdapter, SingleBoundingBox
         {
-            public static readonly string[] IgnoredPrefabs = new string[]
+            public static readonly string[] IgnoredPrefabs =
             {
                 // These prefabs are simply used for decorating.
                 "assets/bundled/prefabs/autospawn/tunnel-transition/transition-sn-0.prefab",
@@ -709,7 +713,7 @@ namespace Oxide.Plugins
                 public override string Alias => "LootTunnel";
             }
 
-            // Straight tunnels with a dividier in the tracks.
+            // Straight tunnels with a divider in the tracks.
             private class SplitTunnel : BaseTunnelInfo
             {
                 public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 0), new Vector3(16.5f, 9, 216));
@@ -789,15 +793,12 @@ namespace Oxide.Plugins
                 throw new NotImplementedException($"Tunnel type not implemented: {shortName}");
             }
 
-            public DungeonGridCell DungeonCell { get; private set; }
-            public OBB BoundingBox { get; private set; }
+            public OBB BoundingBox { get; }
 
             private BaseTunnelInfo _tunnelInfo;
 
             public TrainTunnelAdapter(DungeonGridCell dungeonCell) : base(dungeonCell)
             {
-                DungeonCell = dungeonCell;
-
                 _tunnelInfo = GetTunnelInfo(ShortName);
 
                 Rotation = _tunnelInfo.Rotation;
@@ -823,13 +824,10 @@ namespace Oxide.Plugins
 
         private class UnderwaterLabLinkAdapter : BaseMonumentAdapter, MultipleBoundingBoxes
         {
-            public DungeonBaseLink DungeonLink { get; private set; }
-            public OBB[] BoundingBoxes { get; private set; }
+            public OBB[] BoundingBoxes { get; }
 
             public UnderwaterLabLinkAdapter(DungeonBaseLink dungeonLink) : base(dungeonLink)
             {
-                DungeonLink = dungeonLink;
-
                 var volumeList = dungeonLink.GetComponentsInChildren<DungeonVolume>();
                 BoundingBoxes = new OBB[volumeList.Length];
 
@@ -853,8 +851,8 @@ namespace Oxide.Plugins
 
             public override Vector3 ClosestPointOnBounds(Vector3 position)
             {
-                Vector3 overallClosestPoint = Vector3.positiveInfinity;
-                float closestSqrDistance = float.MaxValue;
+                var overallClosestPoint = Vector3.positiveInfinity;
+                var closestSqrDistance = float.MaxValue;
 
                 foreach (var box in BoundingBoxes)
                 {
@@ -940,68 +938,68 @@ namespace Oxide.Plugins
                 var rightLowerMiddle = Vector3.Lerp(forwardLowerRight, backLowerRight, 0.5f);
                 var rightUpperMiddle = Vector3.Lerp(forwardUpperRight, backUpperRight, 0.5f);
 
-                Ddraw.Sphere(player, forwardUpperLeft, sphereRadius, color, duration);
-                Ddraw.Sphere(player, forwardUpperRight, sphereRadius, color, duration);
-                Ddraw.Sphere(player, forwardLowerLeft, sphereRadius, color, duration);
-                Ddraw.Sphere(player, forwardLowerRight, sphereRadius, color, duration);
+                Sphere(player, forwardUpperLeft, sphereRadius, color, duration);
+                Sphere(player, forwardUpperRight, sphereRadius, color, duration);
+                Sphere(player, forwardLowerLeft, sphereRadius, color, duration);
+                Sphere(player, forwardLowerRight, sphereRadius, color, duration);
 
-                Ddraw.Sphere(player, backLowerRight, sphereRadius, color, duration);
-                Ddraw.Sphere(player, backLowerLeft, sphereRadius, color, duration);
-                Ddraw.Sphere(player, backUpperRight, sphereRadius, color, duration);
-                Ddraw.Sphere(player, backUpperLeft, sphereRadius, color, duration);
+                Sphere(player, backLowerRight, sphereRadius, color, duration);
+                Sphere(player, backLowerLeft, sphereRadius, color, duration);
+                Sphere(player, backUpperRight, sphereRadius, color, duration);
+                Sphere(player, backUpperLeft, sphereRadius, color, duration);
 
-                Ddraw.Segments(player, forwardUpperLeft, forwardUpperRight, color, duration);
-                Ddraw.Segments(player, forwardLowerLeft, forwardLowerRight, color, duration);
-                Ddraw.Segments(player, forwardUpperLeft, forwardLowerLeft, color, duration);
-                Ddraw.Segments(player, forwardUpperRight, forwardLowerRight, color, duration);
+                Segments(player, forwardUpperLeft, forwardUpperRight, color, duration);
+                Segments(player, forwardLowerLeft, forwardLowerRight, color, duration);
+                Segments(player, forwardUpperLeft, forwardLowerLeft, color, duration);
+                Segments(player, forwardUpperRight, forwardLowerRight, color, duration);
 
-                Ddraw.Segments(player, backUpperLeft, backUpperRight, color, duration);
-                Ddraw.Segments(player, backLowerLeft, backLowerRight, color, duration);
-                Ddraw.Segments(player, backUpperLeft, backLowerLeft, color, duration);
-                Ddraw.Segments(player, backUpperRight, backLowerRight, color, duration);
+                Segments(player, backUpperLeft, backUpperRight, color, duration);
+                Segments(player, backLowerLeft, backLowerRight, color, duration);
+                Segments(player, backUpperLeft, backLowerLeft, color, duration);
+                Segments(player, backUpperRight, backLowerRight, color, duration);
 
-                Ddraw.Segments(player, forwardUpperLeft, backUpperLeft, color, duration);
-                Ddraw.Segments(player, forwardLowerLeft, backLowerLeft, color, duration);
-                Ddraw.Segments(player, forwardUpperRight, backUpperRight, color, duration);
-                Ddraw.Segments(player, forwardLowerRight, backLowerRight, color, duration);
+                Segments(player, forwardUpperLeft, backUpperLeft, color, duration);
+                Segments(player, forwardLowerLeft, backLowerLeft, color, duration);
+                Segments(player, forwardUpperRight, backUpperRight, color, duration);
+                Segments(player, forwardLowerRight, backLowerRight, color, duration);
 
                 if (showInfo)
                 {
-                    Ddraw.Sphere(player, forwardLowerMiddle, sphereRadius, Color.yellow, duration);
-                    Ddraw.Sphere(player, forwardUpperMiddle, sphereRadius, Color.yellow, duration);
-                    Ddraw.Sphere(player, backLowerMiddle, sphereRadius, Color.yellow, duration);
-                    Ddraw.Sphere(player, backUpperMiddle, sphereRadius, Color.yellow, duration);
+                    Sphere(player, forwardLowerMiddle, sphereRadius, Color.yellow, duration);
+                    Sphere(player, forwardUpperMiddle, sphereRadius, Color.yellow, duration);
+                    Sphere(player, backLowerMiddle, sphereRadius, Color.yellow, duration);
+                    Sphere(player, backUpperMiddle, sphereRadius, Color.yellow, duration);
 
-                    Ddraw.Sphere(player, leftLowerMiddle, sphereRadius, Color.green, duration);
-                    Ddraw.Sphere(player, leftUpperMiddle, sphereRadius, Color.green, duration);
-                    Ddraw.Sphere(player, rightLowerMiddle, sphereRadius, Color.green, duration);
-                    Ddraw.Sphere(player, rightUpperMiddle, sphereRadius, Color.green, duration);
+                    Sphere(player, leftLowerMiddle, sphereRadius, Color.green, duration);
+                    Sphere(player, leftUpperMiddle, sphereRadius, Color.green, duration);
+                    Sphere(player, rightLowerMiddle, sphereRadius, Color.green, duration);
+                    Sphere(player, rightUpperMiddle, sphereRadius, Color.green, duration);
 
-                    Ddraw.Text(player, forwardUpperMiddle, "<size=20>+Z</size>", Color.yellow, duration);
-                    Ddraw.Text(player, forwardLowerMiddle, "<size=20>+Z</size>", Color.yellow, duration);
-                    Ddraw.Text(player, backUpperMiddle, "<size=20>-Z</size>", Color.yellow, duration);
-                    Ddraw.Text(player, backLowerMiddle, "<size=20>-Z</size>", Color.yellow, duration);
+                    Text(player, forwardUpperMiddle, "<size=20>+Z</size>", Color.yellow, duration);
+                    Text(player, forwardLowerMiddle, "<size=20>+Z</size>", Color.yellow, duration);
+                    Text(player, backUpperMiddle, "<size=20>-Z</size>", Color.yellow, duration);
+                    Text(player, backLowerMiddle, "<size=20>-Z</size>", Color.yellow, duration);
 
-                    Ddraw.Text(player, leftLowerMiddle, "<size=20>-X</size>", Color.green, duration);
-                    Ddraw.Text(player, leftUpperMiddle, "<size=20>-X</size>", Color.green, duration);
-                    Ddraw.Text(player, rightLowerMiddle, "<size=20>+X</size>", Color.green, duration);
-                    Ddraw.Text(player, rightUpperMiddle, "<size=20>+X</size>", Color.green, duration);
+                    Text(player, leftLowerMiddle, "<size=20>-X</size>", Color.green, duration);
+                    Text(player, leftUpperMiddle, "<size=20>-X</size>", Color.green, duration);
+                    Text(player, rightLowerMiddle, "<size=20>+X</size>", Color.green, duration);
+                    Text(player, rightUpperMiddle, "<size=20>+X</size>", Color.green, duration);
 
-                    Ddraw.Text(player, forwardUpperLeft, "<size=28>*</size>", color, duration);
-                    Ddraw.Text(player, forwardUpperRight, "<size=28>*</size>", color, duration);
-                    Ddraw.Text(player, forwardLowerLeft, "<size=28>*</size>", color, duration);
-                    Ddraw.Text(player, forwardLowerRight, "<size=28>*</size>", color, duration);
+                    Text(player, forwardUpperLeft, "<size=28>*</size>", color, duration);
+                    Text(player, forwardUpperRight, "<size=28>*</size>", color, duration);
+                    Text(player, forwardLowerLeft, "<size=28>*</size>", color, duration);
+                    Text(player, forwardLowerRight, "<size=28>*</size>", color, duration);
 
-                    Ddraw.Text(player, backLowerRight, "<size=28>*</size>", color, duration);
-                    Ddraw.Text(player, backLowerLeft, "<size=28>*</size>", color, duration);
-                    Ddraw.Text(player, backUpperRight, "<size=28>*</size>", color, duration);
-                    Ddraw.Text(player, backUpperLeft, "<size=28>*</size>", color, duration);
+                    Text(player, backLowerRight, "<size=28>*</size>", color, duration);
+                    Text(player, backLowerLeft, "<size=28>*</size>", color, duration);
+                    Text(player, backUpperRight, "<size=28>*</size>", color, duration);
+                    Text(player, backUpperLeft, "<size=28>*</size>", color, duration);
                 }
             }
 
             public static void Box(BasePlayer player, OBB boundingBox, Color color, float duration, bool showInfo = true)
             {
-                Ddraw.Box(player, boundingBox.position, boundingBox.rotation, boundingBox.extents, color, duration, showInfo);
+                Box(player, boundingBox.position, boundingBox.rotation, boundingBox.extents, color, duration, showInfo);
             }
         }
 
@@ -1018,8 +1016,7 @@ namespace Oxide.Plugins
             public Vector3 CenterOffset;
 
             [JsonProperty("Center")]
-            private Vector3 DeprecatedCenter
-            { set { CenterOffset = value ; } }
+            private Vector3 DeprecatedCenter { set { CenterOffset = value ; } }
 
             public Bounds ToBounds() => new Bounds(CenterOffset, Size);
 
@@ -1036,10 +1033,10 @@ namespace Oxide.Plugins
         private class BaseDetectionSettings
         {
             [JsonProperty("Auto determine from monument marker", Order = -3)]
-            public bool UseMonumentMarker = false;
+            public bool UseMonumentMarker;
 
             [JsonProperty("Auto determine from prevent building volume", Order = -2)]
-            public bool UsePreventBuildingVolume = false;
+            public bool UsePreventBuildingVolume;
 
             public BaseDetectionSettings Copy()
             {
@@ -1054,7 +1051,7 @@ namespace Oxide.Plugins
         private class BoundSettings : BaseDetectionSettings
         {
             [JsonProperty("Use custom bounds")]
-            public bool UseCustomBounds = false;
+            public bool UseCustomBounds;
 
             [JsonProperty("Custom bounds")]
             public CustomBounds CustomBounds = new CustomBounds();
@@ -1186,9 +1183,7 @@ namespace Oxide.Plugins
                     return false;
 
                 var monumentInfo = monument.Object as MonumentInfo;
-                var isCustomMonument = monumentInfo != null
-                    ? IsCustomMonument(monumentInfo)
-                    : false;
+                var isCustomMonument = monumentInfo != null && IsCustomMonument(monumentInfo);
 
                 MonumentSettings monumentSettings;
 
@@ -1267,7 +1262,7 @@ namespace Oxide.Plugins
 
         private bool MaybeUpdateConfigDict(Dictionary<string, object> currentWithDefaults, Dictionary<string, object> currentRaw)
         {
-            bool changed = false;
+            var changed = false;
 
             foreach (var key in currentWithDefaults.Keys)
             {
@@ -1344,16 +1339,10 @@ namespace Oxide.Plugins
         private string GetMessage(IPlayer player, string messageName, params object[] args) =>
             GetMessage(player.Id, messageName, args);
 
-        private string GetMessage(BasePlayer player, string messageName, params object[] args) =>
-            GetMessage(player.UserIDString, messageName, args);
-
         private void ReplyToPlayer(IPlayer player, string messageName, params object[] args) =>
             player.Reply(string.Format(GetMessage(player, messageName), args));
 
-        private void ChatMessage(BasePlayer player, string messageName, params object[] args) =>
-            player.ChatMessage(string.Format(GetMessage(player, messageName), args));
-
-        private class Lang
+        private static class Lang
         {
             public const string ErrorNoPermission = "NoPermission";
             public const string NoMonumentsFound = "NoMonumentsFound";
