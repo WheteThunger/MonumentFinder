@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
 
@@ -23,6 +24,8 @@ namespace Oxide.Plugins
         private const string PermissionFind = "monumentfinder.find";
 
         private const float DrawDuration = 30;
+
+        private readonly FieldInfo DungeonBaseLinksFieldInfo = typeof(TerrainPath).GetField("DungeonBaseLinks", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
         private Dictionary<MonumentInfo, NormalMonumentAdapter> _normalMonuments = new Dictionary<MonumentInfo, NormalMonumentAdapter>();
         private Dictionary<DungeonGridCell, TrainTunnelAdapter> _trainTunnels = new Dictionary<DungeonGridCell, TrainTunnelAdapter>();
@@ -51,21 +54,21 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
-            foreach (var underwaterLab in TerrainMeta.Path.DungeonBaseEntrances)
+            if (DungeonBaseLinksFieldInfo != null)
             {
-                foreach (var linkObj in underwaterLab.Links)
+                var dungeonLinks = DungeonBaseLinksFieldInfo.GetValue(TerrainMeta.Path) as List<DungeonBaseLink>;
+                if (dungeonLinks != null)
                 {
-                    var link = linkObj.GetComponent<DungeonBaseLink>();
-                    if (link == null)
-                        continue;
+                    foreach (var link in dungeonLinks)
+                    {
+                        // End links represent the posts holding up the lab modules.
+                        if (link.Type == DungeonBaseLinkType.End)
+                            continue;
 
-                    // End links represent the posts holding up the lab modules.
-                    if (link.Type == DungeonBaseLinkType.End)
-                        continue;
-
-                    var labLink = new UnderwaterLabLinkAdapter(link);
-                    _labModules[link] = labLink;
-                    _allMonuments[link] = labLink;
+                        var labLink = new UnderwaterLabLinkAdapter(link);
+                        _labModules[link] = labLink;
+                        _allMonuments[link] = labLink;
+                    }
                 }
             }
 
