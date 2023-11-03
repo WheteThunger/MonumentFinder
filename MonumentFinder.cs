@@ -734,6 +734,13 @@ namespace Oxide.Plugins
                 public override string Alias => "LargeIntersection";
             }
 
+            // 3-way intersections that connect to above ground.
+            private class VerticalIntersection : BaseTunnelInfo
+            {
+                public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 49.875f), new Vector3(216, 9, 116.25f));
+                public override string Alias => "VerticalIntersection";
+            }
+
             // Corner tunnels (45-degree angle).
             private class CornerTunnel : BaseTunnelInfo
             {
@@ -771,6 +778,16 @@ namespace Oxide.Plugins
                 ["intersection-e"] = new Intersection { Rotation = Quaternion.Euler(0, 90, 0) },
                 ["intersection-s"] = new Intersection { Rotation = Quaternion.Euler(0, 180, 0) },
                 ["intersection-w"] = new Intersection { Rotation = Quaternion.Euler(0, 270, 0) },
+
+                ["intersection-b5-n"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
+                ["intersection-b5-e"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 90, 0) },
+                ["intersection-b5-s"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 180, 0) },
+                ["intersection-b5-w"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 270, 0) },
+
+                ["intersection-b6-n"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
+                ["intersection-b6-e"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 90, 0) },
+                ["intersection-b6-s"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 180, 0) },
+                ["intersection-b6-w"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 270, 0) },
 
                 ["intersection"] = new LargeIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
 
