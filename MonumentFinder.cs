@@ -782,6 +782,26 @@ namespace Oxide.Plugins
                 ["intersection-s"] = new Intersection { Rotation = Quaternion.Euler(0, 180, 0) },
                 ["intersection-w"] = new Intersection { Rotation = Quaternion.Euler(0, 270, 0) },
 
+                ["intersection-b1-n"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
+                ["intersection-b1-e"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 90, 0) },
+                ["intersection-b1-s"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 180, 0) },
+                ["intersection-b1-w"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 270, 0) },
+
+                ["intersection-b2-n"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
+                ["intersection-b2-e"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 90, 0) },
+                ["intersection-b2-s"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 180, 0) },
+                ["intersection-b2-w"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 270, 0) },
+
+                ["intersection-b3-n"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
+                ["intersection-b3-e"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 90, 0) },
+                ["intersection-b3-s"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 180, 0) },
+                ["intersection-b3-w"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 270, 0) },
+
+                ["intersection-b4-n"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
+                ["intersection-b4-e"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 90, 0) },
+                ["intersection-b4-s"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 180, 0) },
+                ["intersection-b4-w"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 270, 0) },
+
                 ["intersection-b5-n"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 0, 0) },
                 ["intersection-b5-e"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 90, 0) },
                 ["intersection-b5-s"] = new VerticalIntersection { Rotation = Quaternion.Euler(0, 180, 0) },
