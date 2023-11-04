@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Monument Finder", "WhiteThunder", "3.1.1")]
+    [Info("Monument Finder", "WhiteThunder", "3.1.2")]
     [Description("Find monuments with commands or API.")]
     internal class MonumentFinder : CovalencePlugin
     {
