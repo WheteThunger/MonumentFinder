@@ -317,6 +317,7 @@ class MonumentAdapter
     public string Alias => (string)_monumentInfo["Alias"];
     public Vector3 Position => (Vector3)_monumentInfo["Position"];
     public Quaternion Rotation => (Quaternion)_monumentInfo["Rotation"];
+    public List<OBB> => (List<OBB>)_monumentInfo["BoundingBoxes"];
 
     private Dictionary<string, object> _monumentInfo;
 

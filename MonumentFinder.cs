@@ -509,11 +509,11 @@ namespace Oxide.Plugins
                             ["Alias"] = Alias,
                             ["Position"] = Position,
                             ["Rotation"] = Rotation,
+                            ["BoundingBoxes"] = BoundingBoxes,
                             ["TransformPoint"] = new Func<Vector3, Vector3>(TransformPoint),
                             ["InverseTransformPoint"] = new Func<Vector3, Vector3>(InverseTransformPoint),
                             ["ClosestPointOnBounds"] = new Func<Vector3, Vector3>(ClosestPointOnBounds),
                             ["IsInBounds"] = new Func<Vector3, bool>(IsInBounds),
-                            ["BoundingBoxes"] = BoundingBoxes,
                         };
                     }
 
