@@ -288,6 +288,8 @@ Each `Dictionary<string, object>` object consists of the following keys.
   - Type: `Vector3`
 - `"Rotation"` -- The rotation of the monument.
   - Type: `Quaternion`
+- `"BoundingBoxes"` -- List of bounding boxes for the monument. Most monuments have one, but underwater lab modules may have multiple.
+  - Type: `List<OBB>`
 - `"TransformPoint"` -- Delegate that works like [UnityEngine.Transform.TransformPoint](https://docs.unity3d.com/ScriptReference/Transform.TransformPoint.html).
   - Type: `Func<Vector3, Vector3>`
 - `"InverseTransformPoint"` -- Delegate that works like [UnityEngine.Transform.InverseTransformPoint](https://docs.unity3d.com/ScriptReference/Transform.InverseTransformPoint.html).

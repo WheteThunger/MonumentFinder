@@ -292,25 +292,13 @@ namespace Oxide.Plugins
             {
                 ShowMonumentName(basePlayer, monument);
 
-                var withBoundingBox = monument as SingleBoundingBox;
-                if (withBoundingBox != null)
+                var showBoxDetails = monument.BoundingBoxes.Length == 1;
+                foreach (var boundingBox in monument.BoundingBoxes)
                 {
-                    var boundingBox = withBoundingBox.BoundingBox;
-                    if (boundingBox.extents != Vector3.zero)
-                    {
-                        Ddraw.Box(basePlayer, boundingBox, Color.magenta, DrawDuration);
-                    }
+                    if (boundingBox.extents == Vector3.zero)
+                        continue;
 
-                    return;
-                }
-
-                var withMultipleBoundingBoxes = monument as MultipleBoundingBoxes;
-                if (withMultipleBoundingBoxes != null)
-                {
-                    foreach (var boundingBox in withMultipleBoundingBoxes.BoundingBoxes)
-                    {
-                        Ddraw.Box(basePlayer, boundingBox, Color.magenta, DrawDuration, showInfo: false);
-                    }
+                    Ddraw.Box(basePlayer, boundingBox, Color.magenta, DrawDuration, showBoxDetails);
                 }
             }
         }
@@ -421,16 +409,6 @@ namespace Oxide.Plugins
 
         #region Monument Adapter
 
-        private interface SingleBoundingBox
-        {
-            OBB BoundingBox { get; }
-        }
-
-        private interface MultipleBoundingBoxes
-        {
-            OBB[] BoundingBoxes { get; }
-        }
-
         private abstract class BaseMonumentAdapter
         {
             protected static string GetShortName(string prefabName)
@@ -450,6 +428,7 @@ namespace Oxide.Plugins
 
             public Vector3 Position { get; protected set; }
             public Quaternion Rotation { get; protected set; }
+            public OBB[] BoundingBoxes { get; protected set; }
 
             public BaseMonumentAdapter(MonoBehaviour behavior)
             {
@@ -470,8 +449,36 @@ namespace Oxide.Plugins
                 return Quaternion.Inverse(Rotation) * (worldPosition - Position);
             }
 
-            public abstract bool IsInBounds(Vector3 position);
-            public abstract Vector3 ClosestPointOnBounds(Vector3 position);
+            public bool IsInBounds(Vector3 position)
+            {
+                foreach (var box in BoundingBoxes)
+                {
+                    if (box.Contains(position))
+                        return true;
+                }
+
+                return false;
+            }
+
+            public Vector3 ClosestPointOnBounds(Vector3 position)
+            {
+                var overallClosestPoint = Vector3.positiveInfinity;
+                var closestSqrDistance = float.MaxValue;
+
+                foreach (var box in BoundingBoxes)
+                {
+                    var closestPoint = box.ClosestPoint(position);
+                    var currentSqrDistance = (position - closestPoint).sqrMagnitude;
+
+                    if (currentSqrDistance < closestSqrDistance)
+                    {
+                        overallClosestPoint = closestPoint;
+                        closestSqrDistance = currentSqrDistance;
+                    }
+                }
+
+                return overallClosestPoint;
+            }
 
             public virtual bool MatchesFilter(string filter, string shortName, string alias)
             {
@@ -506,6 +513,7 @@ namespace Oxide.Plugins
                             ["InverseTransformPoint"] = new Func<Vector3, Vector3>(InverseTransformPoint),
                             ["ClosestPointOnBounds"] = new Func<Vector3, Vector3>(ClosestPointOnBounds),
                             ["IsInBounds"] = new Func<Vector3, bool>(IsInBounds),
+                            ["BoundingBoxes"] = BoundingBoxes,
                         };
                     }
 
@@ -514,7 +522,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private class NormalMonumentAdapter : BaseMonumentAdapter, SingleBoundingBox
+        private class NormalMonumentAdapter : BaseMonumentAdapter
         {
             public static Dictionary<string, Bounds> MonumentBounds = new Dictionary<string, Bounds>
             {
@@ -576,7 +584,6 @@ namespace Oxide.Plugins
             };
 
             public MonumentInfo MonumentInfo { get; }
-            public OBB BoundingBox { get; }
 
             public NormalMonumentAdapter(MonumentInfo monumentInfo) : base(monumentInfo)
             {
@@ -661,14 +668,8 @@ namespace Oxide.Plugins
                     }
                 }
 
-                BoundingBox = new OBB(Position, Rotation, bounds);
+                BoundingBoxes = new[] { new OBB(Position, Rotation, bounds) };
             }
-
-            public override bool IsInBounds(Vector3 position) =>
-                BoundingBox.Contains(position);
-
-            public override Vector3 ClosestPointOnBounds(Vector3 position) =>
-                BoundingBox.ClosestPoint(position);
 
             public override bool MatchesFilter(string filter, string shortName, string alias)
             {
@@ -677,7 +678,7 @@ namespace Oxide.Plugins
             }
         }
 
-        private class TrainTunnelAdapter : BaseMonumentAdapter, SingleBoundingBox
+        private class TrainTunnelAdapter : BaseMonumentAdapter
         {
             public static readonly string[] IgnoredPrefabs =
             {
@@ -854,18 +855,10 @@ namespace Oxide.Plugins
 
                 BoundingBox = new OBB(Position, Rotation, bounds);
             }
-
-            public override bool IsInBounds(Vector3 position) =>
-                BoundingBox.Contains(position);
-
-            public override Vector3 ClosestPointOnBounds(Vector3 position) =>
-                BoundingBox.ClosestPoint(position);
         }
 
-        private class UnderwaterLabLinkAdapter : BaseMonumentAdapter, MultipleBoundingBoxes
+        private class UnderwaterLabLinkAdapter : BaseMonumentAdapter
         {
-            public OBB[] BoundingBoxes { get; }
-
             public UnderwaterLabLinkAdapter(DungeonBaseLink dungeonLink) : base(dungeonLink)
             {
                 var volumeList = dungeonLink.GetComponentsInChildren<DungeonVolume>();
@@ -876,37 +869,6 @@ namespace Oxide.Plugins
                     var volume = volumeList[i];
                     BoundingBoxes[i] = new OBB(volume.transform.position, volume.transform.rotation, volume.bounds);
                 }
-            }
-
-            public override bool IsInBounds(Vector3 position)
-            {
-                foreach (var box in BoundingBoxes)
-                {
-                    if (box.Contains(position))
-                        return true;
-                }
-
-                return false;
-            }
-
-            public override Vector3 ClosestPointOnBounds(Vector3 position)
-            {
-                var overallClosestPoint = Vector3.positiveInfinity;
-                var closestSqrDistance = float.MaxValue;
-
-                foreach (var box in BoundingBoxes)
-                {
-                    var closestPoint = box.ClosestPoint(position);
-                    var currentSqrDistance = (position - closestPoint).sqrMagnitude;
-
-                    if (currentSqrDistance < closestSqrDistance)
-                    {
-                        overallClosestPoint = closestPoint;
-                        closestSqrDistance = currentSqrDistance;
-                    }
-                }
-
-                return overallClosestPoint;
             }
         }
 
@@ -946,7 +908,7 @@ namespace Oxide.Plugins
                 }
             }
 
-            public static void Box(BasePlayer player, Vector3 center, Quaternion rotation, Vector3 halfExtents, Color color, float duration, bool showInfo = true)
+            public static void Box(BasePlayer player, Vector3 center, Quaternion rotation, Vector3 halfExtents, Color color, float duration, bool showBoxDetails = true)
             {
                 var boxArea = halfExtents.x * halfExtents.z;
 
@@ -1003,7 +965,7 @@ namespace Oxide.Plugins
                 Segments(player, forwardUpperRight, backUpperRight, color, duration);
                 Segments(player, forwardLowerRight, backLowerRight, color, duration);
 
-                if (showInfo)
+                if (showBoxDetails)
                 {
                     Sphere(player, forwardLowerMiddle, sphereRadius, Color.yellow, duration);
                     Sphere(player, forwardUpperMiddle, sphereRadius, Color.yellow, duration);
@@ -1037,9 +999,9 @@ namespace Oxide.Plugins
                 }
             }
 
-            public static void Box(BasePlayer player, OBB boundingBox, Color color, float duration, bool showInfo = true)
+            public static void Box(BasePlayer player, OBB boundingBox, Color color, float duration, bool showBoxDetails = true)
             {
-                Box(player, boundingBox.position, boundingBox.rotation, boundingBox.extents, color, duration, showInfo);
+                Box(player, boundingBox.position, boundingBox.rotation, boundingBox.extents, color, duration, showBoxDetails);
             }
         }
 
