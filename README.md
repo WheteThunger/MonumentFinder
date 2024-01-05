@@ -5,6 +5,24 @@
 - Supports vanilla monuments, custom monuments, train tunnels, and underwater labs
 - Allows customizing monument bounds which is useful for custom monuments
 
+## How it works
+
+The primary objective of Monument Finder is to accurately define the bounds of monuments. This is necessary because the bounds defined by the game are not accurate for every monument, and there is no way for map makers to define bounds for their custom monuments. Plugins that care where monuments are located and how much space they occupy can utilize Monument Finder to find out. Server owners can assist plugins that use Monument Finder by defining or overriding monuments bounds in the config as needed.
+
+All plugins that use Monument Finder get the same information, allowing them to have a consistent view of which monuments occupy which space. This is a feature, but not every plugin necessarily wants the same view of monuments. For example, a plugin that wants to limit teleportation radius around a monument may want different bounds than defined in Monument Finder. In such a case, that plugin can provide its own logic/config for defining monument bounds and doesn't _need_ to use Monument Finder.
+
+For vanilla monuments that already have fairly accurate bounds, Monument Finder simply operates using those bounds. For vanilla monuments that have inaccurate bounds, as well as for underground Train Tunnel sections, Monument Finder provides hard-coded bounds that the developer and/or community has deemed accurate. The bounds can also be overriden by server owners in the config.
+
+Underwater labs are procedurally generated collections of modules. Monument Finder considers each module as a separate monument, since the overall lab monument doesn't have a consistent layout. As a result, this allows server owners to, for example, use the Monument Addons plugin to place a vending machine in a moonpool module, causing every instance of that moonpool module to have an identical vending machine, across all underwater lab monuments.
+
+For custom monuments, there are multiple options for defining bounds:
+
+- Map makers can resize the monument marker (using transform scale) to encapsulate all the contents of the monument, and server owners can configure Monument Finder to determine that monument's bounds from the monument marker.
+- Map makers can place a "prevent building" volume on the monument (applicable to most custom monuments), and server owners can configure Monument Finder to determine that monument's bounds from the prevent building volume.
+- Server owners can define custom bounds in the config.
+
+Map makers can assist with the above configuration process by providing recommended configuration to server owners.
+
 ## Permissions
 
 - `monumentfinder.find` -- Allows players to find monuments. Intended for administrators.
