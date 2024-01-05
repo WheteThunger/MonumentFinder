@@ -307,7 +307,7 @@ Each `Dictionary<string, object>` object consists of the following keys.
 - `"Rotation"` -- The rotation of the monument.
   - Type: `Quaternion`
 - `"BoundingBoxes"` -- List of bounding boxes for the monument. Most monuments have one, but underwater lab modules may have multiple.
-  - Type: `List<OBB>`
+  - Type: `OBB[]`
 - `"TransformPoint"` -- Delegate that works like [UnityEngine.Transform.TransformPoint](https://docs.unity3d.com/ScriptReference/Transform.TransformPoint.html).
   - Type: `Func<Vector3, Vector3>`
 - `"InverseTransformPoint"` -- Delegate that works like [UnityEngine.Transform.InverseTransformPoint](https://docs.unity3d.com/ScriptReference/Transform.InverseTransformPoint.html).
@@ -335,7 +335,7 @@ class MonumentAdapter
     public string Alias => (string)_monumentInfo["Alias"];
     public Vector3 Position => (Vector3)_monumentInfo["Position"];
     public Quaternion Rotation => (Quaternion)_monumentInfo["Rotation"];
-    public List<OBB> => (List<OBB>)_monumentInfo["BoundingBoxes"];
+    public OBB[] BoundingBoxes => (OBB[])_monumentInfo["BoundingBoxes"];
 
     private Dictionary<string, object> _monumentInfo;
 
