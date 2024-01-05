@@ -834,8 +834,6 @@ namespace Oxide.Plugins
                 throw new NotImplementedException($"Tunnel type not implemented: {shortName}");
             }
 
-            public OBB BoundingBox { get; }
-
             private BaseTunnelInfo _tunnelInfo;
 
             public TrainTunnelAdapter(DungeonGridCell dungeonCell) : base(dungeonCell)
@@ -853,7 +851,7 @@ namespace Oxide.Plugins
                     bounds = monumentSettings.Bounds.CustomBounds.ToBounds();
                 }
 
-                BoundingBox = new OBB(Position, Rotation, bounds);
+                BoundingBoxes = new[] { new OBB(Position, Rotation, bounds) };
             }
         }
 
