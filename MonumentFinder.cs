@@ -642,7 +642,8 @@ namespace Oxide.Plugins
                     {
                         if (volumeCollider != null)
                         {
-                            bounds = volumeCollider.bounds;
+                            var volumeColliderBounds = volumeCollider.bounds;
+                            bounds = new Bounds(volumeColliderBounds.center, volumeColliderBounds.size);
                             bounds.center = Quaternion.Inverse(Rotation) * (bounds.center - Position);
                         }
                         else
