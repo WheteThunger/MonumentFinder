@@ -27,10 +27,10 @@ namespace Oxide.Plugins
 
         private readonly FieldInfo DungeonBaseLinksFieldInfo = typeof(TerrainPath).GetField("DungeonBaseLinks", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
-        private Dictionary<MonumentInfo, NormalMonumentAdapter> _normalMonuments = new Dictionary<MonumentInfo, NormalMonumentAdapter>();
-        private Dictionary<DungeonGridCell, TrainTunnelAdapter> _trainTunnels = new Dictionary<DungeonGridCell, TrainTunnelAdapter>();
-        private Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter> _labModules = new Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter>();
-        private Dictionary<MonoBehaviour, BaseMonumentAdapter> _allMonuments = new Dictionary<MonoBehaviour, BaseMonumentAdapter>();
+        private Dictionary<MonumentInfo, NormalMonumentAdapter> _normalMonuments = new();
+        private Dictionary<DungeonGridCell, TrainTunnelAdapter> _trainTunnels = new();
+        private Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter> _labModules = new();
+        private Dictionary<MonoBehaviour, BaseMonumentAdapter> _allMonuments = new();
 
         private Collider[] _colliderBuffer = new Collider[8];
 
@@ -56,8 +56,7 @@ namespace Oxide.Plugins
         {
             if (DungeonBaseLinksFieldInfo != null)
             {
-                var dungeonLinks = DungeonBaseLinksFieldInfo.GetValue(TerrainMeta.Path) as List<DungeonBaseLink>;
-                if (dungeonLinks != null)
+                if (DungeonBaseLinksFieldInfo.GetValue(TerrainMeta.Path) is List<DungeonBaseLink> dungeonLinks)
                 {
                     foreach (var link in dungeonLinks)
                     {
@@ -414,7 +413,7 @@ namespace Oxide.Plugins
             protected static string GetShortName(string prefabName)
             {
                 var slashIndex = prefabName.LastIndexOf("/");
-                var baseName = (slashIndex == -1) ? prefabName : prefabName.Substring(slashIndex + 1);
+                var baseName = (slashIndex == -1) ? prefabName : prefabName[(slashIndex + 1)..];
                 return baseName.Replace(".prefab", "");
             }
 
@@ -427,16 +426,18 @@ namespace Oxide.Plugins
             public string Alias { get; protected set; }
 
             public Vector3 Position { get; protected set; }
-            public Quaternion Rotation { get; protected set; }
+            protected Quaternion Rotation { get; set; }
             public OBB[] BoundingBoxes { get; protected set; }
 
-            public BaseMonumentAdapter(MonoBehaviour behavior)
+            protected BaseMonumentAdapter(MonoBehaviour behavior)
             {
                 Object = behavior;
                 PrefabName = behavior.name;
                 ShortName = GetShortName(behavior.name);
-                Position = behavior.transform.position;
-                Rotation = behavior.transform.rotation;
+
+                var transform = behavior.transform;
+                Position = transform.position;
+                Rotation = transform.rotation;
             }
 
             public Vector3 TransformPoint(Vector3 localPosition)
@@ -524,7 +525,7 @@ namespace Oxide.Plugins
 
         private class NormalMonumentAdapter : BaseMonumentAdapter
         {
-            public static Dictionary<string, Bounds> MonumentBounds = new Dictionary<string, Bounds>
+            public static Dictionary<string, Bounds> MonumentBounds = new()
             {
                 // These bounds are more accurate than what is provided in vanilla.
                 ["airfield_1"] = new Bounds(new Vector3(0, 15, -25), new Vector3(355, 70, 210)),
@@ -661,8 +662,7 @@ namespace Oxide.Plugins
                     }
                     else
                     {
-                        Bounds hardCodedBounds;
-                        if (MonumentBounds.TryGetValue(ShortName, out hardCodedBounds))
+                        if (MonumentBounds.TryGetValue(ShortName, out var hardCodedBounds))
                         {
                             bounds = hardCodedBounds;
                         }
@@ -700,60 +700,60 @@ namespace Oxide.Plugins
             // Train stations.
             private class TrainStation : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(0, 8.75f, 0), new Vector3(108, 18, 216));
+                public override Bounds Bounds => new(new Vector3(0, 8.75f, 0), new Vector3(108, 18, 216));
                 public override string Alias => "TrainStation";
             }
 
             // Straight tunnels that contain barricades, loot and tunnel dwellers.
             private class BarricadeTunnel : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 0), new Vector3(45f, 9, 216));
+                public override Bounds Bounds => new(new Vector3(0, 4.25f, 0), new Vector3(45f, 9, 216));
                 public override string Alias => "BarricadeTunnel";
             }
 
             // Straight tunnels contain loot and tunnel dwellers.
             private class LootTunnel : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 0), new Vector3(16.5f, 9, 216));
+                public override Bounds Bounds => new(new Vector3(0, 4.25f, 0), new Vector3(16.5f, 9, 216));
                 public override string Alias => "LootTunnel";
             }
 
             // Straight tunnels with a divider in the tracks.
             private class SplitTunnel : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 0), new Vector3(16.5f, 9, 216));
+                public override Bounds Bounds => new(new Vector3(0, 4.25f, 0), new Vector3(16.5f, 9, 216));
                 public override string Alias => "SplitTunnel";
             }
 
             // 3-way intersections.
             private class Intersection : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 49.875f), new Vector3(216, 9, 116.25f));
+                public override Bounds Bounds => new(new Vector3(0, 4.25f, 49.875f), new Vector3(216, 9, 116.25f));
                 public override string Alias => "Intersection";
             }
 
             // 4-way intersections.
             private class LargeIntersection : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 0), new Vector3(216, 9, 216));
+                public override Bounds Bounds => new(new Vector3(0, 4.25f, 0), new Vector3(216, 9, 216));
                 public override string Alias => "LargeIntersection";
             }
 
             // 3-way intersections that connect to above ground.
             private class VerticalIntersection : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(0, 4.25f, 49.875f), new Vector3(216, 9, 116.25f));
+                public override Bounds Bounds => new(new Vector3(0, 4.25f, 49.875f), new Vector3(216, 9, 116.25f));
                 public override string Alias => "VerticalIntersection";
             }
 
             // Corner tunnels (45-degree angle).
             private class CornerTunnel : BaseTunnelInfo
             {
-                public override Bounds Bounds => new Bounds(new Vector3(-49.875f, 4.25f, 49.875f), new Vector3(116.25f, 9, 116.25f));
+                public override Bounds Bounds => new(new Vector3(-49.875f, 4.25f, 49.875f), new Vector3(116.25f, 9, 116.25f));
                 public override string Alias => "CornerTunnel";
             }
 
-            private static readonly Dictionary<string, BaseTunnelInfo> PrefabToTunnelInfo = new Dictionary<string, BaseTunnelInfo>
+            private static readonly Dictionary<string, BaseTunnelInfo> PrefabToTunnelInfo = new()
             {
                 ["station-sn-0"] = new TrainStation { Rotation = Quaternion.Euler(0, 180, 0) },
                 ["station-sn-1"] = new TrainStation { Rotation = Quaternion.Euler(0, 0, 0) },
@@ -828,8 +828,7 @@ namespace Oxide.Plugins
 
             private static BaseTunnelInfo GetTunnelInfo(string shortName)
             {
-                BaseTunnelInfo tunnelInfo;
-                if (PrefabToTunnelInfo.TryGetValue(shortName, out tunnelInfo))
+                if (PrefabToTunnelInfo.TryGetValue(shortName, out var tunnelInfo))
                     return tunnelInfo;
 
                 throw new NotImplementedException($"Tunnel type not implemented: {shortName}");
@@ -866,7 +865,8 @@ namespace Oxide.Plugins
                 for (var i = 0; i < volumeList.Length; i++)
                 {
                     var volume = volumeList[i];
-                    BoundingBoxes[i] = new OBB(volume.transform.position, volume.transform.rotation, volume.bounds);
+                    var transform = volume.transform;
+                    BoundingBoxes[i] = new OBB(transform.position, transform.rotation, volume.bounds);
                 }
             }
         }
@@ -1017,9 +1017,9 @@ namespace Oxide.Plugins
             public Vector3 CenterOffset;
 
             [JsonProperty("Center")]
-            private Vector3 DeprecatedCenter { set { CenterOffset = value ; } }
+            private Vector3 DeprecatedCenter { set => CenterOffset = value; }
 
-            public Bounds ToBounds() => new Bounds(CenterOffset, Size);
+            public Bounds ToBounds() => new(CenterOffset, Size);
 
             public CustomBounds Copy()
             {
@@ -1055,7 +1055,7 @@ namespace Oxide.Plugins
             public bool UseCustomBounds;
 
             [JsonProperty("Custom bounds")]
-            public CustomBounds CustomBounds = new CustomBounds();
+            public CustomBounds CustomBounds = new();
 
             public new BoundSettings Copy()
             {
@@ -1072,13 +1072,13 @@ namespace Oxide.Plugins
         private class MonumentSettings
         {
             [JsonProperty("Position")]
-            public BaseDetectionSettings Position = new BaseDetectionSettings();
+            public BaseDetectionSettings Position = new();
 
             [JsonProperty("Rotation")]
-            public BaseDetectionSettings Rotation = new BaseDetectionSettings();
+            public BaseDetectionSettings Rotation = new();
 
             [JsonProperty("Bounds")]
-            public BoundSettings Bounds = new BoundSettings();
+            public BoundSettings Bounds = new();
 
             public MonumentSettings Copy()
             {
@@ -1097,7 +1097,7 @@ namespace Oxide.Plugins
             public string Command = "mf";
 
             [JsonProperty("Default custom monument settings")]
-            public MonumentSettings DefaultCustomMonumentSettings = new MonumentSettings
+            public MonumentSettings DefaultCustomMonumentSettings = new()
             {
                 Position = new BaseDetectionSettings
                 {
@@ -1122,9 +1122,9 @@ namespace Oxide.Plugins
             };
 
             [JsonProperty("Monuments", ObjectCreationHandling = ObjectCreationHandling.Replace)]
-            private Dictionary<string, MonumentSettings> MonumentSettingsMap = new Dictionary<string, MonumentSettings>
+            private Dictionary<string, MonumentSettings> MonumentSettingsMap = new()
             {
-                ["example_monument"] = new MonumentSettings
+                ["example_monument"] = new()
                 {
                     Position = new BaseDetectionSettings
                     {
@@ -1172,8 +1172,7 @@ namespace Oxide.Plugins
 
             public MonumentSettings GetMonumentSettings(string monumentName)
             {
-                MonumentSettings monumentSettings;
-                return MonumentSettingsMap.TryGetValue(monumentName, out monumentSettings)
+                return MonumentSettingsMap.TryGetValue(monumentName, out var monumentSettings)
                     ? monumentSettings
                     : null;
             }
@@ -1194,10 +1193,9 @@ namespace Oxide.Plugins
                 }
                 else
                 {
-                    Bounds bounds;
-                    if (!NormalMonumentAdapter.MonumentBounds.TryGetValue(aliasOrShortName, out bounds))
+                    if (!NormalMonumentAdapter.MonumentBounds.TryGetValue(aliasOrShortName, out var bounds))
                     {
-                        bounds = default(Bounds);
+                        bounds = default;
                     }
 
                     monumentSettings = new MonumentSettings
@@ -1219,11 +1217,11 @@ namespace Oxide.Plugins
             }
         }
 
-        private Configuration GetDefaultConfig() => new Configuration();
+        private Configuration GetDefaultConfig() => new();
 
         #endregion
 
-        #region Configuration Boilerplate
+        #region Configuration Helpers
 
         private class SerializableConfiguration
         {
@@ -1267,13 +1265,11 @@ namespace Oxide.Plugins
 
             foreach (var key in currentWithDefaults.Keys)
             {
-                object currentRawValue;
-                if (currentRaw.TryGetValue(key, out currentRawValue))
+                if (currentRaw.TryGetValue(key, out var currentRawValue))
                 {
-                    var defaultDictValue = currentWithDefaults[key] as Dictionary<string, object>;
                     var currentDictValue = currentRawValue as Dictionary<string, object>;
 
-                    if (defaultDictValue != null)
+                    if (currentWithDefaults[key] is Dictionary<string, object> defaultDictValue)
                     {
                         if (currentDictValue == null)
                         {
@@ -1281,7 +1277,9 @@ namespace Oxide.Plugins
                             changed = true;
                         }
                         else if (MaybeUpdateConfigDict(defaultDictValue, currentDictValue))
+                        {
                             changed = true;
+                        }
                     }
                 }
                 else
