@@ -143,6 +143,7 @@ Eventually it should look something like below. The +X, -X, +Z, and -Z guideline
 These were found by using Prefab Sniffer with the command `prefab find assets/bundled/prefabs/autospawn/monument`.
 
 - airfield_1
+- arctic_research_base_a
 - bandit_town
 - cave_large_hard
 - cave_large_medium
@@ -159,6 +160,7 @@ These were found by using Prefab Sniffer with the command `prefab find assets/bu
 - desert_military_base_c
 - desert_military_base_d
 - excavator_1
+- ferry_terminal_1
 - fishing_village_a
 - fishing_village_b
 - fishing_village_c
@@ -176,6 +178,7 @@ These were found by using Prefab Sniffer with the command `prefab find assets/bu
 - mining_quarry_a
 - mining_quarry_b
 - mining_quarry_c
+- nuclear_missile_silo
 - oilrig_1
 - oilrig_2
 - powerplant_1

@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Monument Finder", "WhiteThunder", "3.1.2")]
+    [Info("Monument Finder", "WhiteThunder", "3.1.3")]
     [Description("Find monuments with commands or API.")]
     internal class MonumentFinder : CovalencePlugin
     {
@@ -554,8 +554,8 @@ namespace Oxide.Plugins
                 ["mining_quarry_a"] = new Bounds(new Vector3(2, 10, 2), new Vector3(52, 20, 72)),
                 ["mining_quarry_b"] = new Bounds(new Vector3(-5, 10, -8), new Vector3(60, 20, 40)),
                 ["mining_quarry_c"] = new Bounds(new Vector3(-6, 10, 8), new Vector3(42, 20, 60)),
-                ["OilrigAI"] = new Bounds(new Vector3(18, 20, -2), new Vector3(68, 60, 76)),
-                ["OilrigAI2"] = new Bounds(new Vector3(3, 43, 12), new Vector3(80, 96, 120)),
+                ["oilrig_1"] = new Bounds(new Vector3(3, 43, 12), new Vector3(80, 96, 120)),
+                ["oilrig_2"] = new Bounds(new Vector3(18, 20, -2), new Vector3(68, 60, 76)),
                 ["power_sub_big_1"] = new Bounds(new Vector3(0, 5, 0.5f), new Vector3(20, 10, 22f)),
                 ["power_sub_big_2"] = new Bounds(new Vector3(-1, 5, 1), new Vector3(23, 10, 22)),
                 ["power_sub_small_1"] = new Bounds(new Vector3(0, 4, 0), new Vector3(14, 8, 14)),
