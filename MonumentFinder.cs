@@ -21,12 +21,15 @@ namespace Oxide.Plugins
         private static MonumentFinder _pluginInstance;
         private static Configuration _pluginConfig;
 
+        private const string MonumentMarkerPrefabShortName = "monument_marker.prefab";
+
         private const string PermissionFind = "monumentfinder.find";
 
         private const float DrawDuration = 30;
 
         private readonly FieldInfo DungeonBaseLinksFieldInfo = typeof(TerrainPath).GetField("DungeonBaseLinks", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
+        private Dictionary<MonumentInfo, string> _customMonumentNameTable = new();
         private Dictionary<MonumentInfo, NormalMonumentAdapter> _normalMonuments = new();
         private Dictionary<DungeonGridCell, TrainTunnelAdapter> _trainTunnels = new();
         private Dictionary<DungeonBaseLink, UnderwaterLabLinkAdapter> _labModules = new();
@@ -54,6 +57,23 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
+            foreach (var (prefabName, gameObjectList) in World.SpawnedPrefabs)
+            {
+                // Skip this prefab name if the first item isn't a monument marker. This is an optimization because
+                // there could be hundreds of thousands to scan. This approach could possibly miss valid monument
+                // markers that have the same name as other prefabs.
+                if (!IsMonumentMarker(gameObjectList.FirstOrDefault(), out _))
+                    continue;
+
+                foreach (var gameObject in gameObjectList)
+                {
+                    if (IsMonumentMarker(gameObject, out var monumentInfo))
+                    {
+                        _customMonumentNameTable[monumentInfo] = prefabName;
+                    }
+                }
+            }
+
             if (DungeonBaseLinksFieldInfo != null)
             {
                 if (DungeonBaseLinksFieldInfo.GetValue(TerrainMeta.Path) is List<DungeonBaseLink> dungeonLinks)
@@ -90,7 +110,7 @@ namespace Oxide.Plugins
 
             foreach (var monument in TerrainMeta.Path.Monuments)
             {
-                var normalMonument = new NormalMonumentAdapter(monument);
+                var normalMonument = new NormalMonumentAdapter(monument, _customMonumentNameTable);
                 _normalMonuments[monument] = normalMonument;
                 _allMonuments[monument] = normalMonument;
             }
@@ -312,7 +332,15 @@ namespace Oxide.Plugins
 
         private static bool IsCustomMonument(MonumentInfo monumentInfo)
         {
-            return monumentInfo.name.Contains("monument_marker.prefab");
+            return monumentInfo.name.Contains(MonumentMarkerPrefabShortName);
+        }
+
+        private static bool IsMonumentMarker(GameObject gameObject, out MonumentInfo monumentInfo)
+        {
+            monumentInfo = null;
+            return gameObject != null
+                   && gameObject.name.EndsWith(MonumentMarkerPrefabShortName)
+                   && gameObject.TryGetComponent(out monumentInfo);
         }
 
         private static Collider FindPreventBuildingVolume(Vector3 position)
@@ -586,7 +614,7 @@ namespace Oxide.Plugins
 
             public MonumentInfo MonumentInfo { get; }
 
-            public NormalMonumentAdapter(MonumentInfo monumentInfo) : base(monumentInfo)
+            public NormalMonumentAdapter(MonumentInfo monumentInfo, Dictionary<MonumentInfo, string> customMonumentNameTable) : base(monumentInfo)
             {
                 MonumentInfo = monumentInfo;
                 var bounds = monumentInfo.Bounds;
@@ -594,6 +622,12 @@ namespace Oxide.Plugins
                 if (IsCustomMonument(monumentInfo))
                 {
                     PrefabName = monumentInfo.transform.root.name;
+                    if (PrefabName.EndsWith(MonumentMarkerPrefabShortName)
+                        && customMonumentNameTable.TryGetValue(monumentInfo, out var customMonumentName))
+                    {
+                        PrefabName = customMonumentName;
+                    }
+
                     ShortName = PrefabName;
 
                     var monumentSettings = _pluginConfig.GetMonumentSettings(ShortName)
